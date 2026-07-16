@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2025 官方抽籤系統 (完美對稱中文化版)</title>
+    <title>WRO 2025 官方抽籤系統 (完美還原場地細節版)</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e9ecef; color: #333; margin: 0; padding: 20px; }
         h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 0;}
         .controls { text-align: center; margin-bottom: 20px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         button { font-size: 16px; padding: 12px 25px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
@@ -18,7 +18,7 @@
         
         .map-panel { flex: 2; min-width: 500px; max-width: 800px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; }
         
-        /* 純 CSS 繪製的完美對稱賽道 */
+        /* 賽道底板 (含背景色用來模擬挖空的內圈) */
         .map-container { 
             position: relative; 
             width: 100%; 
@@ -26,16 +26,45 @@
             aspect-ratio: 1 / 1; 
             background-color: #fff; 
             overflow: hidden;
+            border-radius: 8px;
         }
         
         /* 賽道外牆、中心虛線、內牆 */
         .track-wall { position: absolute; box-sizing: border-box; }
-        /* 外圈柏油路 */
-        .outer-wall { top: 10%; bottom: 10%; left: 10%; right: 10%; border: 4px solid #aaa; border-radius: 6%; background-color: #3b3b3b; }
-        /* 中間分隔虛線 (完美置中於 18% 處) */
-        .center-line { top: 18%; bottom: 18%; left: 18%; right: 18%; border: 3px dashed rgba(255, 255, 255, 0.35); border-radius: 4.5%; pointer-events: none; }
-        /* 內圈非賽道區 (挖空) */
-        .inner-wall { top: 26%; bottom: 26%; left: 26%; right: 26%; border: 4px solid #aaa; border-radius: 3%; background-color: #fff; }
+        
+        /* 外圈柏油路與白色粗邊界 */
+        .outer-wall { 
+            top: 10%; bottom: 10%; left: 10%; right: 10%; 
+            border: 6px solid #fff; 
+            border-radius: 8%; 
+            background-color: #2b2d31; /* 深灰色路面 */
+            box-shadow: 0 0 0 2px #ccc, inset 0 0 0 1px #555; 
+            z-index: 1;
+        }
+        
+        /* 中間分隔虛線 */
+        .center-line { 
+            top: 18%; bottom: 18%; left: 18%; right: 18%; 
+            border: 3px dashed rgba(255, 255, 255, 0.4); 
+            border-radius: 5.5%; 
+            pointer-events: none; 
+            z-index: 2;
+        }
+
+        /* 藍色與橘色區域劃分線 */
+        .boundary-line { position: absolute; z-index: 3; }
+        .line-v-blue { width: 5px; height: 16%; background-color: #0066ff; }
+        .line-h-orange { height: 5px; width: 16%; background-color: #ff7b00; }
+
+        /* 內圈非賽道區 (白色挖空 + 白色粗邊界) */
+        .inner-wall { 
+            top: 26%; bottom: 26%; left: 26%; right: 26%; 
+            border: 6px solid #fff; 
+            border-radius: 4%; 
+            background-color: #e9ecef; /* 與網頁背景同色，視覺挖空 */
+            box-shadow: inset 0 0 0 2px #ccc, 0 0 0 1px #555;
+            z-index: 4;
+        }
 
         /* 視覺化柱子元素 */
         .overlay { position: absolute; transform: translate(-50%, -50%); width: 3.5%; aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 2px 2px 6px rgba(0,0,0,0.8); z-index: 10; border: 2.5px solid #fff; transition: all 0.4s ease;}
@@ -43,16 +72,16 @@
         .pillar-green { background-color: #00a800; }
         
         /* 停車場 */
-        .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px;}
+        .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);}
     </style>
 </head>
 <body onload="runDraw()">
 
-    <h1>WRO 2025 決賽抽籤系統 (精準對稱版)</h1>
+    <h1>WRO 2025 決賽抽籤系統 (場地細節還原版)</h1>
     
     <div class="controls">
         <button class="draw-btn" onclick="runDraw()">🎲 重新抽籤 (Generate New)</button>
-        <div style="margin-top: 10px; font-size: 14px; color: #666;">無須上傳圖片，位置100%透過數學精準貼齊車道中央！</div>
+        <div style="margin-top: 10px; font-size: 14px; color: #666;">完美還原 WRO 賽道白線與橘/藍區域分割線，100% 精準對齊！</div>
     </div>
 
     <div class="main-container">
@@ -64,6 +93,16 @@
             <div class="map-container" id="map-container">
                 <div class="track-wall outer-wall"></div>
                 <div class="track-wall center-line"></div>
+                
+                <div class="boundary-line line-v-blue" style="top: 10%; left: 26%; transform: translateX(-50%);"></div>
+                <div class="boundary-line line-v-blue" style="top: 10%; right: 26%; transform: translateX(50%);"></div>
+                <div class="boundary-line line-v-blue" style="bottom: 10%; left: 26%; transform: translateX(-50%);"></div>
+                <div class="boundary-line line-v-blue" style="bottom: 10%; right: 26%; transform: translateX(50%);"></div>
+                <div class="boundary-line line-h-orange" style="left: 10%; top: 26%; transform: translateY(-50%);"></div>
+                <div class="boundary-line line-h-orange" style="left: 10%; bottom: 26%; transform: translateY(50%);"></div>
+                <div class="boundary-line line-h-orange" style="right: 10%; top: 26%; transform: translateY(-50%);"></div>
+                <div class="boundary-line line-h-orange" style="right: 10%; bottom: 26%; transform: translateY(50%);"></div>
+
                 <div class="track-wall inner-wall"></div>
                 
                 <div id="overlays-layer"></div>
@@ -74,7 +113,6 @@
     <script>
         const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
         
-        // 取得區塊名稱 (中英對照)
         const getSectionInfo = () => {
             const t1 = tossCoin(), t2 = tossCoin();
             if (t1==="Heads" && t2==="Heads") return { id: "Top", name: "上方區 (Top)" };
@@ -104,10 +142,6 @@
             35: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
         };
 
-        // 【精準坐標系】
-        // 賽道外牆10%~90%、內牆26%~74%。
-        // 外側車道中心點為 14% (或 86%)，內側車道中心點為 22% (或 78%)。
-        // p1, p2, p3 分別精準分布在直線路段的 34%, 50%, 66%。
         const COORDS = {
             "Top": {
                 "Outer": { "p1": [34, 14], "p2": [50, 14], "p3": [66, 14] },
@@ -127,9 +161,7 @@
             }
         };
 
-        // 放置紅綠柱
         function addPillar(secId, pos, color, row, hasParking) {
-            // WRO 重要規則：該區有停車場時，強制推向 Inner 內側
             const actualRow = hasParking ? "Inner" : row; 
             const xy = COORDS[secId][actualRow][pos];
             
@@ -140,7 +172,6 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 繪製停車場 (精準置於內側車道正中央)
         function drawParking(secId) {
             const el = document.createElement('div');
             el.className = 'parking-zone';
@@ -158,28 +189,24 @@
             let html = `<div class="section-title">🏁 Obstacle 決賽抽籤結果</div>`;
             const config = {};
 
-            // 1. 行駛方向
             const dirEng = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
             const dirChn = dirEng === "Clockwise" ? "順時針" : "逆時針";
             config.direction = dirEng;
             html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold;">${dirChn}</span><br>`;
 
-            // 2. 單一標誌區
             const s = getSectionInfo();
             config.single_sign_section = s.id;
             html += `<strong>2. 單一標誌區：</strong> <span style="color:#007bff; font-weight:bold;">${s.name}</span><br>`;
 
-            // 3. 單一標誌顏色 (直接決定卡牌 9 或 10)
             const colorToss = tossCoin();
             config.single_sign_card = colorToss === "Heads" ? 9 : 10;
             const colorChn = colorToss === "Heads" ? "<span style='color:#00a800;'>綠柱 (卡牌 #9)</span>" : "<span style='color:#d90429;'>紅柱 (卡牌 #10)</span>";
             html += `<strong>3. 單一標誌顏色：</strong> ${colorChn}<br>`;
 
-            // 4. 洗牌分配其他區域
             html += `<br><strong>4. 其他區域卡牌分配：</strong><br>`;
             let deck = Array.from({length: 36}, (_, i) => i + 1);
-            deck = deck.filter(c => c !== config.single_sign_card); // 移除已經被抽走的單一標誌卡牌
-            deck.sort(() => Math.random() - 0.5); // 洗牌
+            deck = deck.filter(c => c !== config.single_sign_card);
+            deck.sort(() => Math.random() - 0.5);
 
             const sections = ["Top", "Right", "Bottom", "Left"];
             const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
@@ -192,12 +219,10 @@
                 html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區 獲得 <strong>卡牌 #${card}</strong><br>`;
             });
 
-            // 5. 停車場
             const p = getSectionInfo();
             config.parking_section = p.id;
             html += `<br><strong>5. 停車場位置：</strong> <span style="color:#F702F9; font-weight:bold;">${p.name}</span><br>`;
             
-            // --- 開始繪製畫面 ---
             const all_layouts = { ...config.other_sections_layout };
             all_layouts[config.single_sign_section] = config.single_sign_card;
 
