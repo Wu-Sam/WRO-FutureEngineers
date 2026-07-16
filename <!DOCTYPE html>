@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WRO 2024 未來工程師 抽籤系統</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #0056b3;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+        select, button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        select {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+        }
+        button.draw-btn {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+        }
+        button.draw-btn:hover {
+            background-color: #218838;
+        }
+        button.reset-btn {
+            background-color: #dc3545;
+            color: white;
+            font-weight: bold;
+        }
+        button.reset-btn:hover {
+            background-color: #c82333;
+        }
+        .field-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            border: 10px solid #555;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+        .inner-wall {
+            position: absolute;
+            background-color: #ddd;
+            border: 5px solid #333;
+            transition: all 0.5s ease;
+        }
+        /* 內部牆體預設(決賽避障)為固定大小 */
+        .inner-wall.fixed {
+            top: 200px; left: 200px;
+            width: 180px; height: 180px;
+        }
+        .info-panel {
+            margin: 20px auto;
+            max-width: 600px;
+            background: #eef2f5;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            line-height: 1.6;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        /* 賽段區域設定 */
+        .segment {
+            position: absolute;
+            display: grid;
+            gap: 10px;
+        }
+        .segment.top { top: 20px; left: 200px; width: 180px; height: 160px; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+        .segment.bottom { bottom: 20px; left: 200px; width: 180px; height: 160px; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+        .segment.left { top: 200px; left: 20px; width: 160px; height: 180px; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .segment.right { top: 200px; right: 20px; width: 160px; height: 180px; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        
+        .spot {
+            background-color: rgba(0, 123, 255, 0.1);
+            border: 1px dashed #007bff;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+            position: relative;
+        }
+        .car-start {
+            background-color: #ffc107 !important;
+            border: 2px solid #d39e00 !important;
+            color: #856404;
+            font-weight: bold;
+        }
+        .sign-red {
+            background-color: #ff4d4d !important;
+            border: 2px solid #cc0000 !important;
+            color: white;
+            font-weight: bold;
+        }
+        .sign-green {
+            background-color: #28a745 !important;
+            border: 2px solid #1e7e34 !important;
+            color: white;
+            font-weight: bold;
+        }
+        .wall-label {
+            position: absolute;
+            font-size: 14px;
+            font-weight: bold;
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>WRO 2024 未來工程師 (自動駕駛) 場地抽籤</h1>
+    
+    <div class="controls">
+        <label for="mode-select"><strong>模式切換：</strong></label>
+        <select id="mode-select" onchange="resetField()">
+            <option value="track">資格賽 (賽道挑戰賽)</option>
+            <option value="obstacle">決賽 (障礙避障賽)</option>
+        </select>
+        <button class="draw-btn" onclick="drawLots()">🎲 進行抽籤</button>
+        <button class="reset-btn" onclick="resetField()">🔄 RESET 重置</button>
+    </div>
+
+    <div class="info-panel" id="result-info">
+        <strong>抽籤結果將顯示於此...</strong>
+    </div>
+
+    <div class="field-container" id="field">
+        <div class="inner-wall fixed" id="inner-wall"></div>
+        
+        <div class="segment top" id="seg-0"></div>
+        <div class="segment right" id="seg-1"></div>
+        <div class="segment bottom" id="seg-2"></div>
+        <div class="segment left" id="seg-3"></div>
+    </div>
+
+    <script>
+        const segments = ['top', 'right', 'bottom', 'left'];
+        const segmentNames = ['上方直線', '右側直線', '下方直線', '左側直線'];
+
+        // 初始化場地格子
+        function initGrid() {
+            segments.forEach((seg, sIdx) => {
+                const container = document.getElementById(`seg-${sIdx}`);
+                container.innerHTML = '';
+                for (let i = 1; i <= 6; i++) {
+                    let spot = document.createElement('div');
+                    spot.className = 'spot';
+                    spot.id = `spot-${sIdx}-${i}`;
+                    spot.innerText = i;
+                    container.appendChild(spot);
+                }
+            });
+        }
+
+        // 重置場地
+        function resetField() {
+            initGrid();
+            document.getElementById('result-info').innerHTML = '<strong>等待抽籤...</strong>';
+            
+            const innerWall = document.getElementById('inner-wall');
+            innerWall.className = 'inner-wall fixed';
+            innerWall.innerHTML = ''; // 清除文字
+        }
+
+        // 抽籤主邏輯
+        function drawLots() {
+            resetField();
+            const mode = document.getElementById('mode-select').value;
+            let resultHTML = "";
+
+            // 1. 決定行駛方向 (順時針 / 逆時針)
+            const direction = Math.random() < 0.5 ? "順時針" : "逆時針";
+            resultHTML += `🚗 <strong>行駛方向：</strong> ${direction}<br>`;
+
+            // 2. 決定起始位置 (4個賽段選1, 1~6格選1)
+            const startSegment = Math.floor(Math.random() * 4);
+            const startSpot = Math.floor(Math.random() * 6) + 1;
+            document.getElementById(`spot-${startSegment}-${startSpot}`).classList.add('car-start');
+            document.getElementById(`spot-${startSegment}-${startSpot}`).innerText = '🚗 起點';
+            resultHTML += `📍 <strong>起始位置：</strong> ${segmentNames[startSegment]} 的第 ${startSpot} 格<br>`;
+
+            if (mode === 'track') {
+                // 資格賽 (賽道挑戰賽)：改變內牆尺寸 (寬/窄)
+                const wallTypes = ['頭像 (寬賽道)', '字 (窄賽道)'];
+                let walls = [];
+                for (let i = 0; i < 4; i++) {
+                    walls.push(Math.random() < 0.5 ? 0 : 1);
+                }
+                resultHTML += `🧱 <strong>內圍牆設定 (上/右/下/左)：</strong><br>`;
+                resultHTML += `上方: ${wallTypes[walls[0]]} | 右側: ${wallTypes[walls[1]]}<br>`;
+                resultHTML += `下方: ${wallTypes[walls[2]]} | 左側: ${wallTypes[walls[3]]}<br>`;
+                
+                // 動態視覺化牆體提示 (簡化示意)
+                const innerWall = document.getElementById('inner-wall');
+                innerWall.innerHTML = `
+                    <div style="text-align:center; padding-top:40%; font-weight:bold; color:#555;">
+                        內部牆體變更<br>
+                        上:${walls[0]===0?'寬':'窄'} 右:${walls[1]===0?'寬':'窄'}<br>
+                        下:${walls[2]===0?'寬':'窄'} 左:${walls[3]===0?'寬':'窄'}
+                    </div>`;
+                    
+            } else if (mode === 'obstacle') {
+                // 決賽 (障礙挑戰賽)：生成交通標誌 (紅/綠)
+                resultHTML += `🚦 <strong>交通標誌位置：</strong><br>`;
+                
+                // 每個直線區域生成一個交通標誌 (避開起點)
+                for (let i = 0; i < 4; i++) {
+                    let signSpot;
+                    do {
+                        signSpot = Math.floor(Math.random() * 6) + 1;
+                    } while (i === startSegment && signSpot === startSpot); // 確保不與車子重疊
+                    
+                    const isGreen = Math.random() < 0.5;
+                    const spotEl = document.getElementById(`spot-${i}-${signSpot}`);
+                    
+                    if (isGreen) {
+                        spotEl.classList.add('sign-green');
+                        spotEl.innerText = '🟩 綠柱';
+                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🟢 綠色標誌 - 靠左行駛)<br>`;
+                    } else {
+                        spotEl.classList.add('sign-red');
+                        spotEl.innerText = '🟥 紅柱';
+                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🔴 紅色標誌 - 靠右行駛)<br>`;
+                    }
+                }
+                resultHTML += `<br><em>備註：綠色代表車輛需從標誌左側通過；紅色代表車輛需從右側通過。</em>`;
+            }
+
+            document.getElementById('result-info').innerHTML = resultHTML;
+        }
+
+        // 頁面載入時初始化
+        window.onload = initGrid;
+    </script>
+</body>
+</html>
