@@ -72,7 +72,7 @@
         .pillar-green { background-color: #00a800; }
         
         /* 停車場 */
-        .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px;}
+        .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);}
     </style>
 </head>
 <body onload="runDraw()">
@@ -81,7 +81,7 @@
     
     <div class="controls">
         <button class="draw-btn" onclick="runDraw()">🎲 重新抽籤 (Generate New)</button>
-        <div style="margin-top: 10px; font-size: 14px; color: #666;">無須上傳圖片，位置100%透過數學精準貼齊車道中央！已補齊所有賽道標線。</div>
+        <div style="margin-top: 10px; font-size: 14px; color: #666;">位置100%精準貼齊車道中央！已修正停車場至外側車道 (Outer Lane)。</div>
     </div>
 
     <div class="main-container">
@@ -179,15 +179,16 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 繪製停車場 (精準置於內側車道正中央)
+        // 繪製停車場 (已修正至精準貼齊外側車道 Outer Lane)
+        // 外側車道範圍：X/Y 佔據 10% ~ 18% (或 82% ~ 90%)
         function drawParking(secId) {
             const el = document.createElement('div');
             el.className = 'parking-zone';
             el.innerHTML = "P";
-            if(secId === "Top") { el.style.left='44%'; el.style.top='18%'; el.style.width='12%'; el.style.height='8%'; }
-            if(secId === "Right") { el.style.left='74%'; el.style.top='44%'; el.style.width='8%'; el.style.height='12%'; }
-            if(secId === "Bottom") { el.style.left='44%'; el.style.top='74%'; el.style.width='12%'; el.style.height='8%'; }
-            if(secId === "Left") { el.style.left='18%'; el.style.top='44%'; el.style.width='8%'; el.style.height='12%'; }
+            if(secId === "Top") { el.style.left='44%'; el.style.top='10%'; el.style.width='12%'; el.style.height='8%'; }
+            if(secId === "Right") { el.style.left='82%'; el.style.top='44%'; el.style.width='8%'; el.style.height='12%'; }
+            if(secId === "Bottom") { el.style.left='44%'; el.style.top='82%'; el.style.width='12%'; el.style.height='8%'; }
+            if(secId === "Left") { el.style.left='10%'; el.style.top='44%'; el.style.width='8%'; el.style.height='12%'; }
             document.getElementById('overlays-layer').appendChild(el);
         }
 
@@ -217,8 +218,8 @@
             // 4. 洗牌分配其他區域
             html += `<br><strong>4. 其他區域卡牌分配：</strong><br>`;
             let deck = Array.from({length: 36}, (_, i) => i + 1);
-            deck = deck.filter(c => c !== config.single_sign_card); // 移除已經被抽走的單一標誌卡牌
-            deck.sort(() => Math.random() - 0.5); // 洗牌
+            deck = deck.filter(c => c !== config.single_sign_card); 
+            deck.sort(() => Math.random() - 0.5); 
 
             const sections = ["Top", "Right", "Bottom", "Left"];
             const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
