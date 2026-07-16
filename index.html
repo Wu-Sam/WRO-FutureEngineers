@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2024 未來工程師 官方規則抽籤系統</title>
+    <title>WRO 2025 未來工程師 抽籤系統</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,11 +15,8 @@
         }
         h1 { color: #0056b3; font-size: 24px; }
         .controls {
-            margin: 10px 0;
-            padding: 15px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 10px 0; padding: 15px; background: #fff;
+            border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: inline-block;
         }
         select, button {
@@ -29,217 +26,136 @@
         select { background-color: #e9ecef; border: 1px solid #ced4da; }
         button.draw-btn { background-color: #28a745; color: white; font-weight: bold; }
         button.draw-btn:hover { background-color: #218838; }
-        button.reset-btn { background-color: #dc3545; color: white; font-weight: bold; }
-        button.reset-btn:hover { background-color: #c82333; }
         
         .info-panel {
-            margin: 10px auto; max-width: 700px; background: #eef2f5;
-            padding: 15px; border-radius: 8px; text-align: left;
-            line-height: 1.6; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 15px;
+            margin: 20px auto; max-width: 700px; background: #fff;
+            padding: 20px; border-radius: 8px; text-align: left;
+            line-height: 1.8; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            font-size: 16px; border-left: 5px solid #0056b3;
         }
-
-        /* 模擬 3000x3000mm 賽道的等比例縮小場地 */
-        .field-container {
-            position: relative; width: 600px; height: 600px;
-            margin: 20px auto; background-color: #fff;
-            border: 5px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            box-sizing: border-box;
+        .section-title {
+            font-weight: bold; color: #0056b3; margin-top: 10px; font-size: 18px;
         }
-        
-        /* 內部牆體指示 */
-        .inner-wall {
-            position: absolute; top: 150px; left: 150px;
-            width: 300px; height: 300px; background-color: #e9ecef;
-            border: 3px dashed #666; display: flex; align-items: center;
-            justify-content: center; font-size: 16px; font-weight: bold;
-            color: #444; flex-direction: column; line-height: 1.5;
-        }
-
-        /* 直線賽段 - 分為4個區塊 */
-        .segment {
-            position: absolute; display: grid; gap: 2px;
-            background-color: #ccc; border: 1px solid #999;
-        }
-        /* 為了符合 6 小格，我們將直線區分為 2列 x 3行 (或 1列x6行，依官方圖示通常是2x3網格) 
-           此處採用官方圖示的 6 格位置分配 */
-        .segment.top { top: 20px; left: 150px; width: 300px; height: 120px; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
-        .segment.bottom { bottom: 20px; left: 150px; width: 300px; height: 120px; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
-        .segment.left { top: 150px; left: 20px; width: 120px; height: 300px; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
-        .segment.right { top: 150px; right: 20px; width: 120px; height: 300px; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
-        
-        .spot {
-            background-color: #fff; display: flex; align-items: center;
-            justify-content: center; font-size: 14px; color: #aaa;
-            position: relative; box-sizing: border-box;
-        }
-        .spot.blocked {
-            background-color: #555; color: #fff; font-size: 12px;
-        }
-        
-        .car-start {
-            background-color: #ffc107 !important; border: 3px solid #d39e00 !important;
-            color: #856404; font-weight: bold;
-        }
-        .sign-red {
-            background-color: #ff4d4d !important; border: 3px solid #cc0000 !important;
-            color: white; font-weight: bold;
-        }
-        .sign-green {
-            background-color: #28a745 !important; border: 3px solid #1e7e34 !important;
-            color: white; font-weight: bold;
-        }
+        .highlight { color: #d90429; font-weight: bold; }
+        .green-text { color: #008000; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>WRO 2024 未來工程師 官方規則抽籤</h1>
+    <h1>WRO 2025 未來工程師 (自動駕駛) 官方抽籤系統</h1>
     
     <div class="controls">
-        <label for="mode-select"><strong>模式：</strong></label>
-        <select id="mode-select" onchange="resetField()">
-            <option value="track">資格賽 (賽道挑戰)</option>
-            <option value="obstacle">決賽 (障礙避障)</option>
+        <label for="mode-select"><strong>賽事模式：</strong></label>
+        <select id="mode-select">
+            <option value="open">Open Challenge (資格賽)</option>
+            <option value="obstacle">Obstacle Challenge (決賽 - 障礙與停車)</option>
         </select>
-        <button class="draw-btn" onclick="drawLots()">🎲 進行官方規則抽籤</button>
-        <button class="reset-btn" onclick="resetField()">🔄 重置場地</button>
+        <button class="draw-btn" onclick="runDraw()">🎲 執行 2025 規則抽籤</button>
     </div>
 
     <div class="info-panel" id="result-info">
-        <strong>等待抽籤中...</strong><br>
-        <span style="font-size: 13px; color: #666;">* 此系統依照 WRO 2024 官方文件規則：包含擲硬幣決定內牆寬窄、重擲被內牆阻擋的起點，以及決賽交通標誌的兩階段抽籤邏輯。</span>
-    </div>
-
-    <div class="field-container" id="field">
-        <div class="inner-wall" id="inner-wall">中央內牆區域</div>
-        <div class="segment top" id="seg-0"></div>
-        <div class="segment right" id="seg-1"></div>
-        <div class="segment bottom" id="seg-2"></div>
-        <div class="segment left" id="seg-3"></div>
+        <strong>請點擊上方按鈕進行抽籤...</strong><br>
+        <span style="font-size: 14px; color: #666;">* 本系統完全還原你上傳的 2025 Python 腳本邏輯 (包含 36 張卡牌演算與停車場判定)。</span>
     </div>
 
     <script>
-        const segments = ['top', 'right', 'bottom', 'left'];
-        const segmentNames = ['上方直線 (0)', '右側直線 (1)', '下方直線 (2)', '左側直線 (3)'];
+        // 模擬硬幣與骰子
+        const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
+        const rollDice = () => Math.floor(Math.random() * 6) + 1;
 
-        function initGrid() {
-            segments.forEach((seg, sIdx) => {
-                const container = document.getElementById(`seg-${sIdx}`);
-                container.innerHTML = '';
-                for (let i = 1; i <= 6; i++) {
-                    let spot = document.createElement('div');
-                    spot.className = 'spot';
-                    spot.id = `spot-${sIdx}-${i}`;
-                    spot.innerText = i;
-                    container.appendChild(spot);
-                }
-            });
+        // 根據兩次硬幣決定賽段
+        function getSectionFromTosses() {
+            const t1 = tossCoin();
+            const t2 = tossCoin();
+            if (t1 === "Heads" && t2 === "Heads") return { id: "Top", name: "上方 (Heads & Heads)", tosses: [t1, t2] };
+            if (t1 === "Heads" && t2 === "Tails") return { id: "Right", name: "右側 (Heads & Tails)", tosses: [t1, t2] };
+            if (t1 === "Tails" && t2 === "Heads") return { id: "Left", name: "左側 (Tails & Heads)", tosses: [t1, t2] };
+            return { id: "Bottom", name: "下方 (Tails & Tails)", tosses: [t1, t2] };
         }
 
-        function resetField() {
-            initGrid();
-            document.getElementById('result-info').innerHTML = '<strong>等待抽籤中...</strong>';
-            document.getElementById('inner-wall').innerHTML = '中央內牆區域';
-        }
-
-        function drawLots() {
-            resetField();
+        function runDraw() {
             const mode = document.getElementById('mode-select').value;
-            let resultHTML = "";
+            const output = document.getElementById('result-info');
+            let html = "";
 
-            // 1. 決定行駛方向
-            const direction = Math.random() < 0.5 ? "順時針" : "逆時針";
-            resultHTML += `🚗 <strong>行駛方向：</strong> ${direction}<br>`;
-
-            // 2. 抽籤：四次硬幣決定內牆 (0:寬/頭像, 1:窄/字)
-            let walls = [];
-            for (let i = 0; i < 4; i++) {
-                walls.push(Math.random() < 0.5 ? "寬(頭像)" : "窄(字)");
-            }
-            resultHTML += `🧱 <strong>內牆設定 (擲硬幣4次)：</strong> 上[${walls[0]}] / 右[${walls[1]}] / 下[${walls[2]}] / 左[${walls[3]}]<br>`;
-            
-            document.getElementById('inner-wall').innerHTML = `
-                <strong>內牆狀態</strong><br><br>
-                上：${walls[0]}<br>
-                左：${walls[3]} &nbsp;&nbsp; 右：${walls[1]}<br>
-                下：${walls[2]}
-            `;
-
-            // 模擬內牆佔用的格子 (寬牆會佔用靠內側的格子 4,5,6)
-            let blockedSpots = { 0:[], 1:[], 2:[], 3:[] };
-            for(let i=0; i<4; i++) {
-                if(walls[i] === "寬(頭像)") {
-                    blockedSpots[i] = [4, 5, 6]; // 假設寬牆佔據了4,5,6格
-                    blockedSpots[i].forEach(spot => {
-                        let el = document.getElementById(`spot-${i}-${spot}`);
-                        if(el) { el.classList.add('blocked'); el.innerText = '牆'; }
-                    });
-                }
-            }
-
-            // 3. 決定起始位置 (1~6格) -> 規則：若在內牆裡，需重新擲骰子
-            const startSegment = Math.floor(Math.random() * 4);
-            let startSpot;
-            let rerollCount = 0;
-            do {
-                startSpot = Math.floor(Math.random() * 6) + 1;
-                rerollCount++;
-            } while (blockedSpots[startSegment].includes(startSpot)); // 重抽直到不在牆內
-
-            const startEl = document.getElementById(`spot-${startSegment}-${startSpot}`);
-            startEl.classList.add('car-start');
-            startEl.innerHTML = '🚗<br>起點';
-            resultHTML += `📍 <strong>起始位置 (擲骰子)：</strong> ${segmentNames[startSegment]} 的第 ${startSpot} 格 `;
-            if(rerollCount > 1) resultHTML += `<span style='color:red;font-size:12px;'>(因內牆阻擋，重擲了 ${rerollCount-1} 次)</span>`;
-            resultHTML += `<br>`;
-
-            // 4. 決賽模式：交通標誌抽籤
-            if (mode === 'obstacle') {
-                resultHTML += `<hr>🚦 <strong>決賽交通標誌 (依官方擲硬幣+抽卡邏輯)：</strong><br>`;
+            if (mode === "open") {
+                // --- 2025 Open Challenge (資格賽) 邏輯 ---
+                html += `<div class="section-title">--- WRO 2025: Open Challenge (資格賽) ---</div>`;
                 
-                // 步驟一：擲兩次硬幣決定起始標誌區域
-                const signStartSegment = Math.floor(Math.random() * 4); 
-                
-                // 步驟二：擲一次硬幣決定起始標誌顏色
-                const firstSignColor = Math.random() < 0.5 ? 'green' : 'red';
-                
-                // 產生其餘三個區域的標誌顏色 (模擬卡片抽出)
-                let remainingColors = ['green', 'red', Math.random()<0.5?'green':'red']; // 確保有一定的隨機性但涵蓋紅綠
-                // 打亂陣列
-                remainingColors.sort(() => Math.random() - 0.5);
-                
-                let currentColors = [];
+                // 1. 行駛方向
+                const direction = Math.random() < 0.5 ? "順時針 (Clockwise)" : "逆時針 (Counter-Clockwise)";
+                html += `<strong>1. 行駛方向：</strong> ${direction}<br>`;
+
+                // 2. 起始賽段
+                const startSec = getSectionFromTosses();
+                html += `<strong>2. 起始賽段 (擲硬幣)：</strong> ${startSec.tosses[0]}, ${startSec.tosses[1]}<br>`;
+                html += `&nbsp;&nbsp;➔ 結果：起點位於 <strong>${startSec.name}</strong><br>`;
+
+                // 3. 走廊寬度 (4個賽段)
+                let widths = [], wTosses = [];
                 for(let i=0; i<4; i++) {
-                    if (i === signStartSegment) currentColors[i] = firstSignColor;
-                    else currentColors[i] = remainingColors.pop();
+                    let toss = tossCoin();
+                    wTosses.push(toss);
+                    widths.push(toss === "Heads" ? "寬 (Wide)" : "窄 (Narrow)");
                 }
+                html += `<strong>3. 走廊寬度設定 (由起點順時針排序)：</strong><br>`;
+                html += `&nbsp;&nbsp;擲硬幣結果：${wTosses.join(', ')}<br>`;
+                html += `&nbsp;&nbsp;- 起點賽段：${widths[0]}<br>`;
+                html += `&nbsp;&nbsp;- 下一個順時針賽段：${widths[1]}<br>`;
+                html += `&nbsp;&nbsp;- 對向賽段：${widths[2]}<br>`;
+                html += `&nbsp;&nbsp;- 最後一個賽段：${widths[3]}<br>`;
 
-                // 依序分配給 4 個直線賽段
-                for (let i = 0; i < 4; i++) {
-                    let signSpot;
-                    // 若與起點重疊，或與寬牆重疊，必須重抽
-                    do {
-                        signSpot = Math.floor(Math.random() * 6) + 1;
-                    } while ( (i === startSegment && signSpot === startSpot) || blockedSpots[i].includes(signSpot) );
-                    
-                    const spotEl = document.getElementById(`spot-${i}-${signSpot}`);
-                    const signColor = currentColors[i];
-                    
-                    if (signColor === 'green') {
-                        spotEl.classList.add('sign-green');
-                        spotEl.innerHTML = '🟩<br>左行';
-                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🟢 綠標誌 - 靠左行駛) ${i===signStartSegment?'<strong>[起始標誌]</strong>':''}<br>`;
-                    } else {
-                        spotEl.classList.add('sign-red');
-                        spotEl.innerHTML = '🟥<br>右行';
-                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🔴 紅標誌 - 靠右行駛) ${i===signStartSegment?'<strong>[起始標誌]</strong>':''}<br>`;
-                    }
-                }
+                // 4. 起始區域 (1-6)
+                const startZone = rollDice();
+                html += `<strong>4. 確切起始位置 (擲骰子)：</strong> 骰出 <span class="highlight">${startZone}</span><br>`;
+                html += `&nbsp;&nbsp;➔ 機器人將從位置 ${startZone} 開始。<br>`;
+
+            } else {
+                // --- 2025 Obstacle Challenge (決賽) 邏輯 ---
+                html += `<div class="section-title">--- WRO 2025: Obstacle Challenge (決賽) ---</div>`;
+                
+                // 1. 單一交通標誌賽段
+                const singleSec = getSectionFromTosses();
+                html += `<strong>1. 單一標誌賽段 (擲硬幣)：</strong> ${singleSec.tosses[0]}, ${singleSec.tosses[1]}<br>`;
+                html += `&nbsp;&nbsp;➔ 單一標誌位於：<strong>${singleSec.name}</strong><br>`;
+
+                // 2 & 3. 顏色與位置
+                const colorToss = tossCoin();
+                const signColor = colorToss === "Heads" ? "<span class='highlight'>紅色 (Red)</span>" : "<span class='green-text'>綠色 (Green)</span>";
+                const signPos = rollDice();
+                html += `<strong>2. 標誌顏色 (擲硬幣)：</strong> ${colorToss} ➔ ${signColor}<br>`;
+                html += `<strong>3. 標誌位置 (擲骰子)：</strong> 骰出位置 <span class="highlight">${signPos}</span><br>`;
+
+                // 4. 其他三個賽段的卡牌抽籤 (1-36卡牌系統)
+                html += `<strong>4. 其他賽段標誌佈置 (卡牌抽籤)：</strong><br>`;
+                
+                // 模擬 36 張牌，隨機抽掉一張做為單一標誌的代表卡
+                let cards = Array.from({length: 36}, (_, i) => i + 1);
+                const removedCard = cards.splice(Math.floor(Math.random() * cards.length), 1)[0];
+                html += `&nbsp;&nbsp;<em>- 卡牌 #${removedCard} 已作為單一標誌佈置移除。</em><br>`;
+                
+                // 洗牌
+                cards.sort(() => Math.random() - 0.5);
+                const sections = ["Top", "Right", "Bottom", "Left"];
+                const otherSections = sections.filter(s => s !== singleSec.id);
+                
+                html += `&nbsp;&nbsp;➔ 賽段 '${otherSections[0]}' 抽到 卡牌 #<strong>${cards.pop()}</strong><br>`;
+                html += `&nbsp;&nbsp;➔ 賽段 '${otherSections[1]}' 抽到 卡牌 #<strong>${cards.pop()}</strong><br>`;
+                html += `&nbsp;&nbsp;➔ 賽段 '${otherSections[2]}' 抽到 卡牌 #<strong>${cards.pop()}</strong><br>`;
+
+                // 5. 停車場 / 起始賽段
+                const parkingSec = getSectionFromTosses();
+                html += `<strong>5. 停車場/起始賽段 (擲硬幣)：</strong> ${parkingSec.tosses[0]}, ${parkingSec.tosses[1]}<br>`;
+                html += `&nbsp;&nbsp;➔ 停車區域位於：<strong>${parkingSec.name}</strong><br>`;
+
+                // 6. 停車方向
+                const dirToss = tossCoin();
+                const parkDir = dirToss === "Heads" ? "前進 (Forward)" : "倒車 (Reverse)";
+                html += `<strong>6. 停車方向 (擲硬幣)：</strong> ${dirToss} ➔ 車輛須以 <strong>${parkDir}</strong> 停入車庫。<br>`;
             }
 
-            document.getElementById('result-info').innerHTML = resultHTML;
+            output.innerHTML = html;
         }
-
-        window.onload = initGrid;
     </script>
 </body>
 </html>
