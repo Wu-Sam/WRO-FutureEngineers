@@ -19,11 +19,11 @@
             border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: inline-block;
         }
-        select, button {
+        select, button, input[type="file"] {
             font-size: 16px; padding: 10px 20px; margin: 5px;
             border: none; border-radius: 5px; cursor: pointer; transition: 0.3s;
         }
-        select { background-color: #e9ecef; border: 1px solid #ced4da; }
+        select, input[type="file"] { background-color: #e9ecef; border: 1px solid #ced4da; }
         button.draw-btn { background-color: #28a745; color: white; font-weight: bold; }
         button.draw-btn:hover { background-color: #218838; }
         
@@ -38,7 +38,7 @@
         .info-panel {
             flex: 1;
             min-width: 300px;
-            max-width: 500px;
+            max-width: 450px;
             background: #fff;
             padding: 20px;
             border-radius: 8px;
@@ -52,18 +52,25 @@
         .map-panel {
             flex: 1;
             min-width: 300px;
-            max-width: 600px;
+            max-width: 650px;
             background: #fff;
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .map-panel img {
             width: 100%;
             height: auto;
+            max-height: 600px;
+            object-fit: contain;
             border-radius: 5px;
             border: 2px solid #ddd;
+            margin-top: 15px;
+            display: none; /* 預設隱藏，載入圖片後顯示 */
         }
 
         .section-title { font-weight: bold; color: #0056b3; margin-top: 10px; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 5px;}
@@ -87,22 +94,38 @@
 
     <div class="main-container">
         <div class="info-panel" id="result-info">
-            <strong>請點擊上方按鈕進行抽籤...</strong><br>
-            <span style="font-size: 14px; color: #666;">* 依照 2025 Python 腳本邏輯建置。</span>
+            <strong>請點擊上方按鈕進行抽籤...</strong>
         </div>
 
         <div class="map-panel">
-            <img src="WRO-2025_FutureEngineers_Playfield.jpg" alt="WRO 2025 官方場地圖" onerror="this.onerror=null; this.src='https://via.placeholder.com/600x600?text=Please+place+WRO-2025_FutureEngineers_Playfield.jpg+in+same+folder';">
-            <p style="font-size: 13px; color: #666; margin-top: 10px;">場地底圖 (2025 官方配置)</p>
+            <div style="background: #eef2f5; padding: 10px; border-radius: 5px; width: 100%;">
+                <label for="imageLoader" style="font-weight:bold; color:#333;">📁 請選擇你的 2025 場地圖 (JPEG照片)：</label><br>
+                <input type="file" id="imageLoader" accept="image/*">
+            </div>
+            <img id="bg-image" src="" alt="WRO 2025 場地圖">
+            <p id="map-hint" style="font-size: 14px; color: #888; margin-top: 20px;">等待載入場地圖...</p>
         </div>
     </div>
 
     <script>
-        // 模擬硬幣與骰子
+        // --- 圖片載入邏輯 ---
+        document.getElementById('imageLoader').addEventListener('change', function(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.getElementById('bg-image');
+                img.src = event.target.result;
+                img.style.display = 'block'; // 顯示圖片
+                document.getElementById('map-hint').style.display = 'none'; // 隱藏提示文字
+            }
+            if(e.target.files[0]) {
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // --- 抽籤邏輯 ---
         const tossCoin = () => Math.random() < 0.5 ? "Heads (正面)" : "Tails (反面)";
         const rollDice = () => Math.floor(Math.random() * 6) + 1;
 
-        // 根據兩次硬幣決定賽段
         function getSectionFromTosses() {
             const t1 = tossCoin();
             const t2 = tossCoin();
@@ -118,20 +141,16 @@
             let html = "";
 
             if (mode === "open") {
-                // --- 2025 Open Challenge (資格賽) 邏輯 ---
+                // 資格賽 (Open Challenge)
                 html += `<div class="section-title">Open Challenge (資格賽) 抽籤結果</div>`;
-                
-                // 1. 行駛方向
                 const direction = Math.random() < 0.5 ? "順時針 (Clockwise)" : "逆時針 (Counter-Clockwise)";
                 html += `<strong>1. 行駛方向：</strong> <span class="blue-text">${direction}</span><br><br>`;
 
-                // 2. 起始賽段
                 const startSec = getSectionFromTosses();
-                html += `<strong>2. 起始賽段 (2次硬幣)：</strong><br>`;
+                html += `<strong>2. 起始賽段：</strong><br>`;
                 html += `&nbsp;&nbsp;➔ 擲出 ${startSec.tosses[0]}, ${startSec.tosses[1]}<br>`;
                 html += `&nbsp;&nbsp;➔ 結果：起點位於 <span class="highlight">${startSec.name}</span><br><br>`;
 
-                // 3. 走廊寬度 (僅資格賽有牆的寬窄問題)
                 let widths = [], wTosses = [];
                 for(let i=0; i<4; i++) {
                     let toss = tossCoin();
@@ -144,36 +163,29 @@
                 html += `&nbsp;&nbsp;➔ 對向賽段：<strong>${widths[2]}</strong><br>`;
                 html += `&nbsp;&nbsp;➔ 最後賽段：<strong>${widths[3]}</strong><br><br>`;
 
-                // 4. 起始區域 (1-6)
                 const startZone = rollDice();
                 html += `<strong>4. 確切起點 (骰子)：</strong> 骰出 <span class="highlight">${startZone}</span> 區塊<br>`;
 
             } else {
-                // --- 2025 Obstacle Challenge (決賽) 邏輯 ---
-                // 決賽中沒有牆的寬窄，只有柱子與停車
+                // 決賽 (Obstacle Challenge)
                 html += `<div class="section-title">Obstacle Challenge (決賽) 抽籤結果</div>`;
                 
-                // 1. 單一交通標誌賽段
                 const singleSec = getSectionFromTosses();
-                html += `<strong>1. 單一標誌賽段 (2次硬幣)：</strong><br>`;
+                html += `<strong>1. 單一標誌賽段：</strong><br>`;
                 html += `&nbsp;&nbsp;➔ 擲出 ${singleSec.tosses[0]}, ${singleSec.tosses[1]}<br>`;
                 html += `&nbsp;&nbsp;➔ 位於：<span class="highlight">${singleSec.name}</span><br><br>`;
 
-                // 2 & 3. 單一標誌顏色與位置
                 const colorToss = tossCoin();
                 const signColor = colorToss.includes("Heads") ? "<span class='highlight'>🟥 紅柱 (Red)</span>" : "<span class='green-text'>🟩 綠柱 (Green)</span>";
                 const signPos = rollDice();
                 html += `<strong>2. 單一標誌顏色：</strong> 擲出 ${colorToss.split(' ')[0]} ➔ ${signColor}<br>`;
                 html += `<strong>3. 單一標誌位置：</strong> 骰出位置 <span class="highlight">${signPos}</span><br><br>`;
 
-                // 4. 其他三個賽段的卡牌抽籤 (1-36卡牌系統)
                 html += `<strong>4. 其他賽段柱子佈置 (36卡牌系統)：</strong><br>`;
                 let cards = Array.from({length: 36}, (_, i) => i + 1);
-                // 隨機移除一張作為單一標誌的代表卡
                 const removedCard = cards.splice(Math.floor(Math.random() * cards.length), 1)[0];
                 html += `&nbsp;&nbsp;<em style="color:#888;">(卡牌 #${removedCard} 已作為單一標誌保留)</em><br>`;
                 
-                // 洗牌並分配給剩下三個賽段
                 cards.sort(() => Math.random() - 0.5);
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 const otherSections = sections.filter(s => s !== singleSec.id);
@@ -182,21 +194,17 @@
                 html += `&nbsp;&nbsp;➔ ${otherSections[1]} 賽段 ➔ 抽到 <strong>卡牌 #${cards.pop()}</strong><br>`;
                 html += `&nbsp;&nbsp;➔ ${otherSections[2]} 賽段 ➔ 抽到 <strong>卡牌 #${cards.pop()}</strong><br><br>`;
 
-                // 5. 停車場
                 const parkingSec = getSectionFromTosses();
-                html += `<strong>5. 停車場區域 (2次硬幣)：</strong><br>`;
+                html += `<strong>5. 停車場區域：</strong><br>`;
                 html += `&nbsp;&nbsp;➔ 位於：<span class="blue-text">${parkingSec.name}</span><br><br>`;
 
-                // 6. 停車方向
                 const dirToss = tossCoin();
                 const parkDir = dirToss.includes("Heads") ? "前進 (Forward)" : "倒車 (Reverse)";
                 html += `<strong>6. 停車方向：</strong> 擲出 ${dirToss.split(' ')[0]} ➔ 須以 <span class="blue-text">${parkDir}</span> 停入。<br>`;
             }
-
             output.innerHTML = html;
         }
         
-        // 頁面載入時預設執行一次資格賽抽籤
         window.onload = runDraw;
     </script>
 </body>
