@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2024 未來工程師 抽籤系統 (修正版)</title>
+    <title>WRO 2024 未來工程師 官方規則抽籤系統</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,7 +13,7 @@
             margin: 0;
             padding: 20px;
         }
-        h1 { color: #0056b3; }
+        h1 { color: #0056b3; font-size: 24px; }
         .controls {
             margin: 10px 0;
             padding: 15px;
@@ -23,13 +23,8 @@
             display: inline-block;
         }
         select, button {
-            font-size: 16px;
-            padding: 10px 20px;
-            margin: 5px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
+            font-size: 16px; padding: 10px 20px; margin: 5px;
+            border: none; border-radius: 5px; cursor: pointer; transition: 0.3s;
         }
         select { background-color: #e9ecef; border: 1px solid #ced4da; }
         button.draw-btn { background-color: #28a745; color: white; font-weight: bold; }
@@ -38,119 +33,84 @@
         button.reset-btn:hover { background-color: #c82333; }
         
         .info-panel {
-            margin: 10px auto;
-            max-width: 650px;
-            background: #eef2f5;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: left;
-            line-height: 1.6;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            font-size: 15px;
+            margin: 10px auto; max-width: 700px; background: #eef2f5;
+            padding: 15px; border-radius: 8px; text-align: left;
+            line-height: 1.6; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 15px;
         }
 
-        /* 場地總容器 */
+        /* 模擬 3000x3000mm 賽道的等比例縮小場地 */
         .field-container {
-            position: relative;
-            width: 600px;
-            height: 600px;
-            margin: 20px auto;
-            background-color: #fff;
-            border: 4px solid #555;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative; width: 600px; height: 600px;
+            margin: 20px auto; background-color: #fff;
+            border: 5px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             box-sizing: border-box;
         }
         
-        /* 內部牆體提示區 */
+        /* 內部牆體指示 */
         .inner-wall {
-            position: absolute;
-            top: 130px; left: 130px;
-            width: 340px; height: 340px;
-            background-color: #f8f9fa;
-            border: 3px dashed #999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: #555;
-            text-align: center;
-            line-height: 1.5;
+            position: absolute; top: 150px; left: 150px;
+            width: 300px; height: 300px; background-color: #e9ecef;
+            border: 3px dashed #666; display: flex; align-items: center;
+            justify-content: center; font-size: 16px; font-weight: bold;
+            color: #444; flex-direction: column; line-height: 1.5;
         }
 
-        /* 賽段區域設定 - 修正為 1x6 的真實直線比例 */
+        /* 直線賽段 - 分為4個區塊 */
         .segment {
-            position: absolute;
-            display: grid;
-            gap: 2px;
-            background-color: #ccc;
-            border: 1px solid #999;
+            position: absolute; display: grid; gap: 2px;
+            background-color: #ccc; border: 1px solid #999;
         }
-        /* 上方直線：水平排列 6 格 */
-        .segment.top { top: 20px; left: 100px; width: 400px; height: 80px; grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr; }
-        /* 下方直線：水平排列 6 格 */
-        .segment.bottom { bottom: 20px; left: 100px; width: 400px; height: 80px; grid-template-columns: repeat(6, 1fr); grid-template-rows: 1fr; }
-        /* 左側直線：垂直排列 6 格 */
-        .segment.left { top: 100px; left: 20px; width: 80px; height: 400px; grid-template-columns: 1fr; grid-template-rows: repeat(6, 1fr); }
-        /* 右側直線：垂直排列 6 格 */
-        .segment.right { top: 100px; right: 20px; width: 80px; height: 400px; grid-template-columns: 1fr; grid-template-rows: repeat(6, 1fr); }
+        /* 為了符合 6 小格，我們將直線區分為 2列 x 3行 (或 1列x6行，依官方圖示通常是2x3網格) 
+           此處採用官方圖示的 6 格位置分配 */
+        .segment.top { top: 20px; left: 150px; width: 300px; height: 120px; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+        .segment.bottom { bottom: 20px; left: 150px; width: 300px; height: 120px; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
+        .segment.left { top: 150px; left: 20px; width: 120px; height: 300px; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+        .segment.right { top: 150px; right: 20px; width: 120px; height: 300px; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
         
-        /* 單一格子 */
         .spot {
-            background-color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: #999;
-            position: relative;
+            background-color: #fff; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; color: #aaa;
+            position: relative; box-sizing: border-box;
+        }
+        .spot.blocked {
+            background-color: #555; color: #fff; font-size: 12px;
         }
         
-        /* 起點與標誌樣式 */
         .car-start {
-            background-color: #ffc107 !important;
-            border: 3px solid #d39e00 !important;
-            color: #856404;
-            font-weight: bold;
-            box-sizing: border-box;
+            background-color: #ffc107 !important; border: 3px solid #d39e00 !important;
+            color: #856404; font-weight: bold;
         }
         .sign-red {
-            background-color: #ff4d4d !important;
-            border: 3px solid #cc0000 !important;
-            color: white;
-            font-weight: bold;
-            box-sizing: border-box;
+            background-color: #ff4d4d !important; border: 3px solid #cc0000 !important;
+            color: white; font-weight: bold;
         }
         .sign-green {
-            background-color: #28a745 !important;
-            border: 3px solid #1e7e34 !important;
-            color: white;
-            font-weight: bold;
-            box-sizing: border-box;
+            background-color: #28a745 !important; border: 3px solid #1e7e34 !important;
+            color: white; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <h1>WRO 2024 未來工程師 場地抽籤系統</h1>
+    <h1>WRO 2024 未來工程師 官方規則抽籤</h1>
     
     <div class="controls">
-        <label for="mode-select"><strong>賽事模式：</strong></label>
+        <label for="mode-select"><strong>模式：</strong></label>
         <select id="mode-select" onchange="resetField()">
-            <option value="track">資格賽 (賽道挑戰 - 僅抽牆壁與起點)</option>
-            <option value="obstacle">決賽 (障礙避障 - 加入方塊抽籤)</option>
+            <option value="track">資格賽 (賽道挑戰)</option>
+            <option value="obstacle">決賽 (障礙避障)</option>
         </select>
-        <button class="draw-btn" onclick="drawLots()">🎲 進行抽籤</button>
-        <button class="reset-btn" onclick="resetField()">🔄 RESET 重置</button>
+        <button class="draw-btn" onclick="drawLots()">🎲 進行官方規則抽籤</button>
+        <button class="reset-btn" onclick="resetField()">🔄 重置場地</button>
     </div>
 
     <div class="info-panel" id="result-info">
-        <strong>等待抽籤中...</strong>
+        <strong>等待抽籤中...</strong><br>
+        <span style="font-size: 13px; color: #666;">* 此系統依照 WRO 2024 官方文件規則：包含擲硬幣決定內牆寬窄、重擲被內牆阻擋的起點，以及決賽交通標誌的兩階段抽籤邏輯。</span>
     </div>
 
     <div class="field-container" id="field">
         <div class="inner-wall" id="inner-wall">中央內牆區域</div>
-        
         <div class="segment top" id="seg-0"></div>
         <div class="segment right" id="seg-1"></div>
         <div class="segment bottom" id="seg-2"></div>
@@ -159,9 +119,8 @@
 
     <script>
         const segments = ['top', 'right', 'bottom', 'left'];
-        const segmentNames = ['上方直線', '右側直線', '下方直線', '左側直線'];
+        const segmentNames = ['上方直線 (0)', '右側直線 (1)', '下方直線 (2)', '左側直線 (3)'];
 
-        // 初始化場地格子 (1 到 6)
         function initGrid() {
             segments.forEach((seg, sIdx) => {
                 const container = document.getElementById(`seg-${sIdx}`);
@@ -170,7 +129,7 @@
                     let spot = document.createElement('div');
                     spot.className = 'spot';
                     spot.id = `spot-${sIdx}-${i}`;
-                    spot.innerText = i; // 顯示格數 1-6
+                    spot.innerText = i;
                     container.appendChild(spot);
                 }
             });
@@ -191,64 +150,88 @@
             const direction = Math.random() < 0.5 ? "順時針" : "逆時針";
             resultHTML += `🚗 <strong>行駛方向：</strong> ${direction}<br>`;
 
-            // 2. 決定起始位置 (4個賽段選1, 1~6格選1)
-            const startSegment = Math.floor(Math.random() * 4);
-            const startSpot = Math.floor(Math.random() * 6) + 1;
+            // 2. 抽籤：四次硬幣決定內牆 (0:寬/頭像, 1:窄/字)
+            let walls = [];
+            for (let i = 0; i < 4; i++) {
+                walls.push(Math.random() < 0.5 ? "寬(頭像)" : "窄(字)");
+            }
+            resultHTML += `🧱 <strong>內牆設定 (擲硬幣4次)：</strong> 上[${walls[0]}] / 右[${walls[1]}] / 下[${walls[2]}] / 左[${walls[3]}]<br>`;
             
+            document.getElementById('inner-wall').innerHTML = `
+                <strong>內牆狀態</strong><br><br>
+                上：${walls[0]}<br>
+                左：${walls[3]} &nbsp;&nbsp; 右：${walls[1]}<br>
+                下：${walls[2]}
+            `;
+
+            // 模擬內牆佔用的格子 (寬牆會佔用靠內側的格子 4,5,6)
+            let blockedSpots = { 0:[], 1:[], 2:[], 3:[] };
+            for(let i=0; i<4; i++) {
+                if(walls[i] === "寬(頭像)") {
+                    blockedSpots[i] = [4, 5, 6]; // 假設寬牆佔據了4,5,6格
+                    blockedSpots[i].forEach(spot => {
+                        let el = document.getElementById(`spot-${i}-${spot}`);
+                        if(el) { el.classList.add('blocked'); el.innerText = '牆'; }
+                    });
+                }
+            }
+
+            // 3. 決定起始位置 (1~6格) -> 規則：若在內牆裡，需重新擲骰子
+            const startSegment = Math.floor(Math.random() * 4);
+            let startSpot;
+            let rerollCount = 0;
+            do {
+                startSpot = Math.floor(Math.random() * 6) + 1;
+                rerollCount++;
+            } while (blockedSpots[startSegment].includes(startSpot)); // 重抽直到不在牆內
+
             const startEl = document.getElementById(`spot-${startSegment}-${startSpot}`);
             startEl.classList.add('car-start');
             startEl.innerHTML = '🚗<br>起點';
-            resultHTML += `📍 <strong>起始位置：</strong> ${segmentNames[startSegment]} 的第 ${startSpot} 格<br>`;
+            resultHTML += `📍 <strong>起始位置 (擲骰子)：</strong> ${segmentNames[startSegment]} 的第 ${startSpot} 格 `;
+            if(rerollCount > 1) resultHTML += `<span style='color:red;font-size:12px;'>(因內牆阻擋，重擲了 ${rerollCount-1} 次)</span>`;
+            resultHTML += `<br>`;
 
-            // 3. 內圍牆設定 (無論資格或決賽，通常場地皆需抽出寬窄)
-            const wallTypes = ['寬賽道 (預設)', '窄賽道 (偏移)'];
-            let walls = [];
-            for (let i = 0; i < 4; i++) {
-                walls.push(Math.random() < 0.5 ? 0 : 1);
-            }
-            resultHTML += `🧱 <strong>內牆設定：</strong> 
-                           上[${walls[0]===0?'寬':'窄'}] / 
-                           右[${walls[1]===0?'寬':'窄'}] / 
-                           下[${walls[2]===0?'寬':'窄'}] / 
-                           左[${walls[3]===0?'寬':'窄'}]<br>`;
-            
-            document.getElementById('inner-wall').innerHTML = `
-                內圍牆狀態<br><br>
-                上：${walls[0]===0?'寬':'窄'} <br>
-                左：${walls[3]===0?'寬':'窄'} &nbsp;&nbsp;&nbsp;&nbsp; 右：${walls[1]===0?'寬':'窄'} <br>
-                下：${walls[2]===0?'寬':'窄'}
-            `;
-
-            // 4. 決賽模式：加入方塊 (交通標誌) 抽籤
+            // 4. 決賽模式：交通標誌抽籤
             if (mode === 'obstacle') {
-                resultHTML += `<hr>🚦 <strong>決賽方塊 (交通標誌) 位置：</strong><br>`;
+                resultHTML += `<hr>🚦 <strong>決賽交通標誌 (依官方擲硬幣+抽卡邏輯)：</strong><br>`;
                 
-                // 產生剛好 2綠 2紅 的陣列並洗牌 (修正先前數量隨機的錯誤)
-                let signs = ['green', 'green', 'red', 'red'];
-                for (let i = signs.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [signs[i], signs[j]] = [signs[j], signs[i]];
+                // 步驟一：擲兩次硬幣決定起始標誌區域
+                const signStartSegment = Math.floor(Math.random() * 4); 
+                
+                // 步驟二：擲一次硬幣決定起始標誌顏色
+                const firstSignColor = Math.random() < 0.5 ? 'green' : 'red';
+                
+                // 產生其餘三個區域的標誌顏色 (模擬卡片抽出)
+                let remainingColors = ['green', 'red', Math.random()<0.5?'green':'red']; // 確保有一定的隨機性但涵蓋紅綠
+                // 打亂陣列
+                remainingColors.sort(() => Math.random() - 0.5);
+                
+                let currentColors = [];
+                for(let i=0; i<4; i++) {
+                    if (i === signStartSegment) currentColors[i] = firstSignColor;
+                    else currentColors[i] = remainingColors.pop();
                 }
 
                 // 依序分配給 4 個直線賽段
                 for (let i = 0; i < 4; i++) {
                     let signSpot;
-                    // 隨機抽 1-6 格，若與起點重疊則重抽，直到不重疊為止
+                    // 若與起點重疊，或與寬牆重疊，必須重抽
                     do {
                         signSpot = Math.floor(Math.random() * 6) + 1;
-                    } while (i === startSegment && signSpot === startSpot);
+                    } while ( (i === startSegment && signSpot === startSpot) || blockedSpots[i].includes(signSpot) );
                     
                     const spotEl = document.getElementById(`spot-${i}-${signSpot}`);
-                    const signColor = signs[i];
+                    const signColor = currentColors[i];
                     
                     if (signColor === 'green') {
                         spotEl.classList.add('sign-green');
-                        spotEl.innerHTML = '🟩<br>綠柱';
-                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🟢 綠色標誌 - 需靠左行駛)<br>`;
+                        spotEl.innerHTML = '🟩<br>左行';
+                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🟢 綠標誌 - 靠左行駛) ${i===signStartSegment?'<strong>[起始標誌]</strong>':''}<br>`;
                     } else {
                         spotEl.classList.add('sign-red');
-                        spotEl.innerHTML = '🟥<br>紅柱';
-                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🔴 紅色標誌 - 需靠右行駛)<br>`;
+                        spotEl.innerHTML = '🟥<br>右行';
+                        resultHTML += ` - ${segmentNames[i]}: 第 ${signSpot} 格 (🔴 紅標誌 - 靠右行駛) ${i===signStartSegment?'<strong>[起始標誌]</strong>':''}<br>`;
                     }
                 }
             }
@@ -259,4 +242,4 @@
         window.onload = initGrid;
     </script>
 </body>
-</html> 
+</html>
