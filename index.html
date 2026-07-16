@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2025 官方抽籤與場地可視化系統</title>
+    <title>WRO 2025 官方抽籤與場地視覺化 (完全版)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; }
         h1 { color: #0056b3; font-size: 24px; text-align: center; margin-top: 0;}
@@ -14,49 +14,30 @@
         button.draw-btn:hover { background-color: #218838; }
         
         .main-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-        
-        /* 左側文字資訊區 */
         .info-panel { flex: 1; min-width: 320px; max-width: 400px; background: #fff; padding: 20px; border-radius: 8px; line-height: 1.8; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-top: 5px solid #0056b3; }
         .section-title { font-weight: bold; color: #0056b3; margin-top: 10px; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
         .highlight { color: #d90429; font-weight: bold; }
-        .green-text { color: #008000; font-weight: bold; }
-        .blue-text { color: #0056b3; font-weight: bold; }
-
-        /* 右側場地圖視覺區 */
-        .map-panel { flex: 2; min-width: 500px; max-width: 800px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; }
         
+        .map-panel { flex: 2; min-width: 500px; max-width: 800px; background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; }
         .map-container { position: relative; width: 100%; max-width: 750px; margin-top: 15px; display: none; }
         .map-container img { width: 100%; height: auto; border-radius: 5px; display: block; border: 2px solid #ddd; box-sizing: border-box; }
         
-        /* 視覺化疊加元素 */
-        .overlay { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px black; color: white; z-index: 10; }
+        /* 視覺化元素 */
+        .overlay { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.7); z-index: 10; width: 2.5%; padding-bottom: 2.5%; border: 2px solid #fff; }
+        .pillar-red { background-color: #d90429; }
+        .pillar-green { background-color: #008000; }
         
-        /* 柱子 (Pillars) */
-        .pillar-red { width: 20px; height: 20px; background-color: #d90429; border: 2px solid #fff; border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
-        .pillar-green { width: 20px; height: 20px; background-color: #008000; border: 2px solid #fff; border-radius: 50%; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
-        
-        /* 停車區域 (Parking Lot) */
-        .parking-zone { position: absolute; background-color: rgba(247, 2, 249, 0.4); border: 2px dashed #F702F9; z-index: 5; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #333; text-shadow: 1px 1px 2px white; }
-        
-        /* 寬窄牆體 (Walls) */
-        .wall { position: absolute; background-color: rgba(100, 100, 100, 0.7); border: 1px solid #333; z-index: 4; }
-        
-        /* 起點標記 */
-        .start-car { width: 30px; height: 30px; background-color: #ffc107; border: 2px solid #333; border-radius: 5px; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); font-size: 16px; }
+        /* 停車場 */
+        .parking-zone { position: absolute; border: 4px dashed #F702F9; background-color: rgba(247, 2, 249, 0.2); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 1.5vw;}
     </style>
 </head>
 <body>
 
-    <h1>WRO 2025 未來工程師 官方抽籤與場地視覺化</h1>
+    <h1>WRO 2025 Obstacle Challenge (依官方 Python 嚴格還原)</h1>
     
     <div class="controls">
-        <label for="mode-select"><strong>選擇賽事：</strong></label>
-        <select id="mode-select" onchange="runDraw()">
-            <option value="open">Open Challenge (資格賽 - 牆寬與起點)</option>
-            <option value="obstacle">Obstacle Challenge (決賽 - 標誌柱與停車)</option>
-        </select>
-        <button class="draw-btn" onclick="runDraw()">🎲 執行抽籤</button>
-        <span style="margin-left: 20px; font-weight:bold; color:#333;">📁 載入場地圖：</span>
+        <button class="draw-btn" onclick="runDraw()">🎲 執行 Obstacle 抽籤</button>
+        <span style="margin-left: 20px; font-weight:bold;">📁 載入場地圖：</span>
         <input type="file" id="imageLoader" accept="image/*">
     </div>
 
@@ -68,169 +49,157 @@
         <div class="map-panel">
             <p id="map-hint" style="font-size: 14px; color: #888;">等待載入 WRO-2025_FutureEngineers_Playfield.jpg...</p>
             <div class="map-container" id="map-container">
-                <img id="bg-image" src="" alt="WRO 2025 場地圖">
+                <img id="bg-image" src="" alt="場地圖">
                 <div id="overlays-layer"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 處理圖片上傳 ---
         document.getElementById('imageLoader').addEventListener('change', function(e) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 document.getElementById('bg-image').src = event.target.result;
                 document.getElementById('map-container').style.display = 'block';
                 document.getElementById('map-hint').style.display = 'none';
-                runDraw(); // 載入圖片後自動抽一次
+                runDraw();
             }
             if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
         });
 
-        // 賽段中心基準座標 (百分比 %) - 基於正方形賽道
-        const sectionCoords = {
-            "Top": { x: 50, y: 15 },
-            "Bottom": { x: 50, y: 85 },
-            "Left": { x: 15, y: 50 },
-            "Right": { x: 85, y: 50 }
+        const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
+        const getSectionFromTosses = () => {
+            const t1 = tossCoin(), t2 = tossCoin();
+            if (t1==="Heads" && t2==="Heads") return { id: "Top", name: "Top (Heads & Heads)" };
+            if (t1==="Heads" && t2==="Tails") return { id: "Right", name: "Right (Heads & Tails)" };
+            if (t1==="Tails" && t2==="Heads") return { id: "Left", name: "Left (Tails & Heads)" };
+            return { id: "Bottom", name: "Bottom (Tails & Tails)" };
         };
 
-        const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
-        const rollDice = () => Math.floor(Math.random() * 6) + 1;
+        // 嚴格遵循 Python 代碼裡的 CARD_LAYOUTS (包含其寫法設定)
+        const CARD_LAYOUTS = {
+            1: [["p3", "Green", "Inner"]], 2: [["p3", "Red", "Inner"]],
+            3: [["p2", "Green", "Inner"]], 4: [["p2", "Red", "Inner"]],
+            5: [["p1", "Green", "Inner"]], 6: [["p1", "Red", "Inner"]],
+            7: [["p3", "Green", "Outer"]], 8: [["p3", "Red", "Outer"]],
+            9: [["p2", "Green", "Outer"]], 10: [["p2", "Red", "Outer"]],
+            11: [["p1", "Green", "Inner"]], 12: [["p1", "Red", "Inner"]],
+            13: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]], 14: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
+            15: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]], 16: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
+            17: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]], 18: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
+            19: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]], 20: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
+            21: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]], 22: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
+            23: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]], 24: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
+            25: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]], 26: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
+            27: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]], 28: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
+            29: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]], 30: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
+            31: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]], 32: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
+            33: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 34: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
+            35: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
+        };
 
-        function getSectionFromTosses() {
-            const t1 = tossCoin(), t2 = tossCoin();
-            if (t1==="Heads" && t2==="Heads") return { id: "Top", name: "上方 (Top)" };
-            if (t1==="Heads" && t2==="Tails") return { id: "Right", name: "右側 (Right)" };
-            if (t1==="Tails" && t2==="Heads") return { id: "Left", name: "左側 (Left)" };
-            return { id: "Bottom", name: "下方 (Bottom)" };
-        }
+        // 將 2134x2134 圖片座標換算成百分比，實現完美貼合
+        const COORDS = {
+            "Top": {
+                "Outer": { "p1": [33.2, 15.0], "p2": [48.0, 15.0], "p3": [63.0, 15.0] },
+                "Inner": { "p1": [33.2, 21.1], "p2": [48.0, 21.1], "p3": [63.0, 21.1] }
+            },
+            "Right": {
+                "Outer": { "p1": [80.8, 33.2], "p2": [80.8, 48.0], "p3": [80.8, 63.0] },
+                "Inner": { "p1": [75.0, 33.2], "p2": [75.0, 48.0], "p3": [75.0, 63.0] }
+            },
+            "Bottom": {
+                "Outer": { "p1": [63.0, 80.8], "p2": [48.0, 80.8], "p3": [33.2, 80.8] },
+                "Inner": { "p1": [63.0, 75.0], "p2": [48.0, 75.0], "p3": [33.2, 75.0] }
+            },
+            "Left": {
+                "Outer": { "p1": [15.0, 63.0], "p2": [15.0, 48.0], "p3": [15.0, 33.2] },
+                "Inner": { "p1": [21.1, 63.0], "p2": [21.1, 48.0], "p3": [21.1, 33.2] }
+            }
+        };
 
-        // 清除舊的疊加層
-        function clearOverlays() {
-            document.getElementById('overlays-layer').innerHTML = '';
-        }
-
-        // 新增疊加元素 (柱子/車)
-        function addElement(type, secId, offsetPos, label = "") {
-            const base = sectionCoords[secId];
-            const el = document.createElement('div');
-            el.className = `overlay ${type}`;
-            el.innerHTML = label;
+        function addPillar(secId, pos, color, row, hasParking) {
+            // 最關鍵規則：若此區有停車場，強制推向 Inner 內側
+            const actualRow = hasParking ? "Inner" : row; 
+            const xy = COORDS[secId][actualRow][pos];
             
-            // 根據位置微調 (模擬賽段內的刻度 1-6)
-            let offsetX = 0, offsetY = 0;
-            const spread = 20; // 分散範圍百分比
-            const mappedOffset = ((offsetPos - 3.5) / 3) * spread; // 將 1~6 映射到 -20% ~ +20%
-
-            if(secId === "Top" || secId === "Bottom") offsetX = mappedOffset;
-            if(secId === "Left" || secId === "Right") offsetY = mappedOffset;
-
-            el.style.left = `${base.x + offsetX}%`;
-            el.style.top = `${base.y + offsetY}%`;
+            const el = document.createElement('div');
+            el.className = `overlay ${color === "Red" ? 'pillar-red' : 'pillar-green'}`;
+            el.style.left = `${xy[0]}%`;
+            el.style.top = `${xy[1]}%`;
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 繪製停車場
-        function addParking(secId) {
+        function drawParking(secId) {
             const el = document.createElement('div');
             el.className = 'parking-zone';
             el.innerHTML = "P";
-            // 決定長寬與位置
-            if(secId === "Top" || secId === "Bottom") {
-                el.style.width = '15%'; el.style.height = '10%';
-                el.style.left = '42.5%'; el.style.top = secId === "Top" ? '10%' : '80%';
-            } else {
-                el.style.width = '10%'; el.style.height = '15%';
-                el.style.left = secId === "Left" ? '10%' : '80%'; el.style.top = '42.5%';
-            }
-            document.getElementById('overlays-layer').appendChild(el);
-        }
-
-        // 繪製牆壁 (資格賽專用)
-        function addWall(secId, isWide) {
-            if(isWide) return; // 寬走廊不畫額外牆，窄走廊才畫灰色阻擋區塊
-            const el = document.createElement('div');
-            el.className = 'wall';
-            if(secId === "Top") { el.style.width = '40%'; el.style.height = '4%'; el.style.left='30%'; el.style.top='19%'; }
-            if(secId === "Bottom") { el.style.width = '40%'; el.style.height = '4%'; el.style.left='30%'; el.style.top='77%'; }
-            if(secId === "Left") { el.style.width = '4%'; el.style.height = '40%'; el.style.left='19%'; el.style.top='30%'; }
-            if(secId === "Right") { el.style.width = '4%'; el.style.height = '40%'; el.style.left='77%'; el.style.top='30%'; }
+            // 依照 Python 座標推算停車場範圍百分比
+            if(secId === "Top") { el.style.left='33.2%'; el.style.top='3.2%'; el.style.width='7.5%'; el.style.height='4.6%'; }
+            if(secId === "Right") { el.style.left='87.8%'; el.style.top='33.2%'; el.style.width='4.6%'; el.style.height='7.5%'; }
+            if(secId === "Bottom") { el.style.left='55.2%'; el.style.top='87.8%'; el.style.width='7.5%'; el.style.height='4.6%'; }
+            if(secId === "Left") { el.style.left='3.2%'; el.style.top='55.2%'; el.style.width='4.6%'; el.style.height='7.5%'; }
             document.getElementById('overlays-layer').appendChild(el);
         }
 
         function runDraw() {
-            if(!document.getElementById('bg-image').src.includes("data:image")) {
-                document.getElementById('result-info').innerHTML = "<strong style='color:red;'>⚠️ 請先從右側上方按鈕「載入場地圖」！</strong>";
-                return;
-            }
+            if(!document.getElementById('bg-image').src.includes("data:image")) return;
+            document.getElementById('overlays-layer').innerHTML = '';
+            
+            let html = `<div class="section-title">--- Obstacle Challenge (決賽) ---</div>`;
+            const config = {};
 
-            clearOverlays();
-            const mode = document.getElementById('mode-select').value;
-            const output = document.getElementById('result-info');
-            let html = "";
+            // 1. 方向
+            config.direction = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
+            html += `<strong>1. Driving Direction:</strong> ${config.direction}<br>`;
 
-            if (mode === "open") {
-                // 資格賽
-                html += `<div class="section-title">Open Challenge (資格賽) 抽籤結果</div>`;
-                const dir = Math.random() < 0.5 ? "順時針" : "逆時針";
-                html += `<strong>1. 行駛方向：</strong> <span class="blue-text">${dir}</span><br><br>`;
+            // 2. 單一標誌區塊
+            const s = getSectionFromTosses();
+            config.single_sign_section = s.id;
+            html += `<strong>2. Single Sign Section:</strong> ${s.name}<br>`;
 
-                const startSec = getSectionFromTosses();
-                html += `<strong>2. 起始賽段：</strong> <span class="highlight">${startSec.name}</span><br><br>`;
+            // 3. 單一標誌顏色 -> 直接決定卡牌是 9 或 10
+            const colorToss = tossCoin();
+            config.single_sign_card = colorToss === "Heads" ? 9 : 10;
+            html += `<strong>3. Single Sign Color:</strong> ${colorToss} -> ${colorToss==="Heads"?"Green (Card #9)":"Red (Card #10)"}<br>`;
 
-                let widths = [], isWideArr = [];
-                const sectionsOrder = ["Top", "Right", "Bottom", "Left"]; // 預設依序
-                html += `<strong>3. 內圍牆設定 (深色半透明區塊代表窄賽道)：</strong><br>`;
-                for(let i=0; i<4; i++) {
-                    const isWide = tossCoin() === "Heads";
-                    isWideArr.push(isWide);
-                    html += `&nbsp;&nbsp;➔ ${sectionsOrder[i]}：<strong>${isWide ? "寬 (Wide)" : "窄 (Narrow)"}</strong><br>`;
-                    addWall(sectionsOrder[i], isWide); // 畫牆
-                }
+            // 4. 洗牌分配
+            html += `<br><strong>4. Traffic Sign Layouts (Other Sections):</strong><br>`;
+            let deck = Array.from({length: 36}, (_, i) => i + 1);
+            deck = deck.filter(c => c !== config.single_sign_card); // 移除單一標誌卡牌
+            deck.sort(() => Math.random() - 0.5); // Shuffle
 
-                const startZone = rollDice();
-                html += `<br><strong>4. 起點位置：</strong> 刻度 <span class="highlight">${startZone}</span><br>`;
-                addElement('start-car', startSec.id, startZone, "🚗"); // 放車子
+            const sections = ["Top", "Right", "Bottom", "Left"];
+            const other_sections = sections.filter(sec => sec !== config.single_sign_section);
+            
+            config.other_sections_layout = {};
+            other_sections.forEach(sec => {
+                const card = deck.pop();
+                config.other_sections_layout[sec] = card;
+                html += `&nbsp;&nbsp;➔ Section '${sec}' gets <strong>Card #${card}</strong><br>`;
+            });
 
-            } else {
-                // 決賽
-                html += `<div class="section-title">Obstacle Challenge (決賽) 抽籤結果</div>`;
+            // 5. 停車場
+            const p = getSectionFromTosses();
+            config.parking_section = p.id;
+            html += `<br><strong>5. Parking Lot Section:</strong> ${p.name}<br>`;
+            
+            // 繪製結果
+            const all_layouts = { ...config.other_sections_layout };
+            all_layouts[config.single_sign_section] = config.single_sign_card;
+
+            for (const [sec, cardNum] of Object.entries(all_layouts)) {
+                const layout = CARD_LAYOUTS[cardNum];
+                const hasParking = (sec === config.parking_section);
                 
-                // 單一柱子
-                const singleSec = getSectionFromTosses();
-                const isRed = tossCoin() === "Heads";
-                const signPos = rollDice();
-                
-                html += `<strong>1. 單一標誌區：</strong> <span class="highlight">${singleSec.name}</span><br>`;
-                html += `<strong>2. 顏色與位置：</strong> ${isRed ? "🟥 紅" : "🟩 綠"} / 位置 ${signPos}<br><br>`;
-                
-                addElement(isRed ? 'pillar-red' : 'pillar-green', singleSec.id, signPos);
-
-                // 其他三區 (模擬 36 卡牌)
-                html += `<strong>3. 其餘賽段柱子 (模擬卡牌)：</strong><br>`;
-                const sections = ["Top", "Right", "Bottom", "Left"];
-                const otherSecs = sections.filter(s => s !== singleSec.id);
-                
-                otherSecs.forEach(sec => {
-                    const cardNum = Math.floor(Math.random() * 36) + 1;
-                    html += `&nbsp;&nbsp;➔ ${sec}：抽到卡牌 <strong>#${cardNum}</strong><br>`;
-                    // 為了視覺化，模擬這張卡片產生 2 個隨機柱子
-                    addElement(Math.random()<0.5 ? 'pillar-red' : 'pillar-green', sec, rollDice());
-                    addElement(Math.random()<0.5 ? 'pillar-red' : 'pillar-green', sec, rollDice());
+                layout.forEach(pillar => {
+                    const [pos, color, row] = pillar; // ex: ["p3", "Green", "Inner"]
+                    addPillar(sec, pos, color, row, hasParking);
                 });
-
-                // 停車場
-                const parkSec = getSectionFromTosses();
-                const parkDir = tossCoin() === "Heads" ? "前進" : "倒車";
-                html += `<br><strong>4. 停車區域：</strong> <span class="blue-text">${parkSec.name}</span><br>`;
-                html += `<strong>5. 停車方向：</strong> 須以 <span class="blue-text">${parkDir}</span> 停入<br>`;
-                
-                addParking(parkSec.id);
-                // 放一台車在停車場代表目標方向
-                addElement('start-car', parkSec.id, 3.5, parkDir==="前進" ? "⬆️" : "⬇️");
             }
-            output.innerHTML = html;
+            drawParking(config.parking_section);
+
+            document.getElementById('result-info').innerHTML = html;
         }
     </script>
 </body>
