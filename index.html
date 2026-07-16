@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2025 官方抽籤系統 (雙模式完美還原版)</title>
+    <title>WRO 2025 官方抽籤系統 (雙模式切換版)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
         h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 0;}
+        
+        /* 模式切換頁籤 (Tabs) */
+        .tab-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { font-size: 18px; padding: 12px 30px; border: 2px solid #0056b3; border-radius: 30px; background-color: #fff; color: #0056b3; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .tab-btn:hover { background-color: #e9ecef; }
+        .tab-btn.active { background-color: #0056b3; color: #fff; box-shadow: 0 4px 8px rgba(0,86,179,0.3); }
+
         .controls { text-align: center; margin-bottom: 20px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        select { font-size: 18px; padding: 10px; margin: 5px; border-radius: 5px; border: 2px solid #ccc; font-weight: bold; background: #e9ecef; cursor: pointer; }
-        button { font-size: 16px; padding: 12px 25px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-        button.draw-btn { background-color: #28a745; color: white; font-weight: bold; font-size: 18px; }
+        button.draw-btn { background-color: #28a745; color: white; font-weight: bold; font-size: 18px; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
         button.draw-btn:hover { background-color: #218838; transform: scale(1.02); }
         
         .main-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-        .info-panel { flex: 1; min-width: 320px; max-width: 400px; background: #fff; padding: 25px; border-radius: 8px; line-height: 1.8; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-top: 5px solid #0056b3; font-size: 16px; }
+        .info-panel { flex: 1; min-width: 320px; max-width: 400px; background: #fff; padding: 25px; border-radius: 8px; line-height: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-top: 5px solid #0056b3; font-size: 16px; }
         .section-title { font-weight: bold; color: #0056b3; margin-top: 5px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
         
         .map-panel { flex: 2; min-width: 500px; max-width: 800px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; }
@@ -22,59 +27,63 @@
         /* 賽道底板 */
         .map-container { position: relative; width: 100%; max-width: 700px; aspect-ratio: 1 / 1; background-color: #fff; overflow: hidden; border-radius: 8px; }
         
-        /* 賽道外牆、中心虛線、內牆 */
+        /* 賽道標線 */
         .track-wall { position: absolute; box-sizing: border-box; }
         .outer-wall { top: 10%; bottom: 10%; left: 10%; right: 10%; border: 6px solid #fff; border-radius: 12%; background-color: #3b3b3b; box-shadow: 0 0 0 2px #ddd; z-index: 1; }
         .center-line { top: 18%; bottom: 18%; left: 18%; right: 18%; border: 3px dashed rgba(255, 255, 255, 0.45); border-radius: 7%; pointer-events: none; z-index: 2; }
         .inner-wall { top: 26%; bottom: 26%; left: 26%; right: 26%; border: 6px solid #fff; border-radius: 4%; background-color: #f0f2f5; box-shadow: inset 0 0 0 2px #ddd; z-index: 4; }
 
-        /* 藍/橘 區域分割標線 */
         .boundary-line { position: absolute; z-index: 3; }
         .line-v-blue { width: 6px; height: 16.5%; background-color: #0056b3; }
         .line-h-orange { height: 6px; width: 16.5%; background-color: #ff7b00; }
         
-        /* 【決賽】視覺化柱子與停車場 */
+        /* ================= 視覺化元素 ================= */
+        /* 決賽：柱子與停車場 */
         .overlay { position: absolute; transform: translate(-50%, -50%); width: 3.5%; aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 2px 2px 6px rgba(0,0,0,0.8); z-index: 10; border: 2.5px solid #fff; transition: all 0.4s ease;}
         .pillar-red { background-color: #d90429; }
         .pillar-green { background-color: #00a800; }
-        .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);}
+        .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);}
 
-        /* 【資格賽】視覺化牆體與起點車 */
+        /* 資格賽：牆體與起點車 */
         .wall-block {
             position: absolute; z-index: 6; border: 2px solid #222; border-radius: 2px;
             background: repeating-linear-gradient(45deg, #ffc107, #ffc107 10px, #333 10px, #333 20px);
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 2px 2px 5px rgba(0,0,0,0.5);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5); opacity: 0.9;
         }
         .start-car {
             position: absolute; transform: translate(-50%, -50%); z-index: 15;
             background-color: #ffc107; border: 2px solid #333; border-radius: 5px;
             width: 5.5%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; box-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+            font-size: 22px; box-shadow: 2px 2px 6px rgba(0,0,0,0.7);
         }
     </style>
 </head>
-<body onload="runDraw()">
+<body onload="switchMode('open')">
 
-    <h1>WRO 2025 官方抽籤系統 (雙模式)</h1>
+    <h1>WRO 2025 官方抽籤系統</h1>
+
+    <div class="tab-container">
+        <button id="tab-open" class="tab-btn active" onclick="switchMode('open')">🏁 Open Challenge (資格賽)</button>
+        <button id="tab-obstacle" class="tab-btn" onclick="switchMode('obstacle')">🚧 Obstacle Challenge (決賽)</button>
+    </div>
     
     <div class="controls">
-        <select id="mode-select" onchange="runDraw()">
-            <option value="open">Open Challenge (資格賽：牆寬與起點)</option>
-            <option value="obstacle" selected>Obstacle Challenge (決賽：標誌與停車)</option>
-        </select>
-        <button class="draw-btn" onclick="runDraw()">🎲 重新抽籤 (Generate New)</button>
-        <div style="margin-top: 10px; font-size: 14px; color: #666;">純程式運算，完美支援 WRO 雙賽制！位置 100% 精準對齊車道。</div>
+        <button class="draw-btn" id="main-draw-btn" onclick="runDraw()">🎲 執行資格賽抽籤</button>
+        <div id="mode-hint" style="margin-top: 10px; font-size: 14px; color: #666;">
+            資格賽模式：抽出牆體寬窄 (窄牆會阻擋內側車道) 與 1-6 號起點。
+        </div>
     </div>
 
     <div class="main-container">
         <div class="info-panel" id="result-info">
-            <strong>正在執行抽籤...</strong>
+            <strong>請點擊上方按鈕進行抽籤...</strong>
         </div>
 
         <div class="map-panel">
             <div class="map-container" id="map-container">
                 <div class="track-wall outer-wall"></div>
                 <div class="track-wall center-line"></div>
+                
                 <div class="boundary-line line-v-blue" style="top: 10%; left: 26%; transform: translateX(-50%);"></div>
                 <div class="boundary-line line-v-blue" style="top: 10%; right: 26%; transform: translateX(50%);"></div>
                 <div class="boundary-line line-v-blue" style="bottom: 10%; left: 26%; transform: translateX(-50%);"></div>
@@ -83,6 +92,7 @@
                 <div class="boundary-line line-h-orange" style="left: 10%; bottom: 26%; transform: translateY(50%);"></div>
                 <div class="boundary-line line-h-orange" style="right: 10%; top: 26%; transform: translateY(-50%);"></div>
                 <div class="boundary-line line-h-orange" style="right: 10%; bottom: 26%; transform: translateY(50%);"></div>
+
                 <div class="track-wall inner-wall"></div>
                 
                 <div id="overlays-layer"></div>
@@ -91,8 +101,37 @@
     </div>
 
     <script>
+        let currentMode = 'open'; // 預設模式
+
+        // ================= 模式切換邏輯 =================
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('overlays-layer').innerHTML = ''; // 清空場地
+            document.getElementById('result-info').innerHTML = '<strong>請點擊上方按鈕進行抽籤...</strong>';
+
+            // 更新頁籤 UI
+            document.getElementById('tab-open').classList.remove('active');
+            document.getElementById('tab-obstacle').classList.remove('active');
+            document.getElementById(`tab-${mode}`).classList.add('active');
+
+            // 更新按鈕與提示文字
+            const btn = document.getElementById('main-draw-btn');
+            const hint = document.getElementById('mode-hint');
+
+            if (mode === 'open') {
+                btn.innerHTML = '🎲 執行資格賽 (Open) 抽籤';
+                hint.innerHTML = '資格賽模式：抽出牆體寬窄 (窄牆將以警示塊阻擋內側車道) 與 1-6 號起點。';
+            } else {
+                btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
+                hint.innerHTML = '決賽模式：包含單一標誌、36卡牌障礙物配置，以及停車場強制偏移規則。';
+            }
+
+            // 自動執行一次抽籤
+            runDraw();
+        }
+
+        // ================= 共用抽籤工具 =================
         const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
-        
         const getSectionInfo = () => {
             const t1 = tossCoin(), t2 = tossCoin();
             if (t1==="Heads" && t2==="Heads") return { id: "Top", name: "上方區 (Top)" };
@@ -101,6 +140,7 @@
             return { id: "Bottom", name: "下方區 (Bottom)" };
         };
 
+        // ================= 決賽 (Obstacle) 座標與邏輯 =================
         const CARD_LAYOUTS = {
             1: [["p3", "Green", "Inner"]], 2: [["p3", "Red", "Inner"]],
             3: [["p2", "Green", "Inner"]], 4: [["p2", "Red", "Inner"]],
@@ -129,7 +169,6 @@
             "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
         };
 
-        // --- 決賽 (Obstacle) 繪圖函數 ---
         function addPillar(secId, pos, color, row, hasParking) {
             const actualRow = hasParking ? "Inner" : row; 
             const xy = COORDS[secId][actualRow][pos];
@@ -150,7 +189,7 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // --- 資格賽 (Open) 繪圖函數 ---
+        // ================= 資格賽 (Open) 座標與邏輯 =================
         function drawNarrowWall(secId) {
             const el = document.createElement('div');
             el.className = 'wall-block';
@@ -167,7 +206,7 @@
             const offsets = [30, 38, 46, 54, 62, 70];
             const el = document.createElement('div');
             el.className = 'start-car'; el.innerHTML = "🚗";
-            // 預設將起點車放在 Outer 車道
+            // 起點車固定放在 Outer 車道
             if(secId === "Top") { el.style.left = `${offsets[zone-1]}%`; el.style.top = '14%'; }
             if(secId === "Right") { el.style.left = '86%'; el.style.top = `${offsets[zone-1]}%`; }
             if(secId === "Bottom") { el.style.left = `${offsets[zone-1]}%`; el.style.top = '86%'; }
@@ -175,39 +214,39 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // --- 主程式 ---
+        // ================= 核心抽籤執行 =================
         function runDraw() {
-            document.getElementById('overlays-layer').innerHTML = '';
-            const mode = document.getElementById('mode-select').value;
+            document.getElementById('overlays-layer').innerHTML = ''; // 清除舊圖層
             let html = "";
             const dirEng = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
             const dirChn = dirEng === "Clockwise" ? "順時針" : "逆時針";
 
-            if (mode === 'open') {
-                /* ================= 資格賽 (Open Challenge) ================= */
-                html += `<div class="section-title">🏁 Open 資格賽抽籤結果</div>`;
+            if (currentMode === 'open') {
+                // ---------- 資格賽邏輯 ----------
+                html += `<div class="section-title">🏁 資格賽 (Open) 抽籤結果</div>`;
                 html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold;">${dirChn}</span><br>`;
                 
                 const s = getSectionInfo();
                 html += `<strong>2. 起始賽段：</strong> <span style="color:#007bff; font-weight:bold;">${s.name}</span><br>`;
 
-                html += `<br><strong>3. 賽道寬度 (內圍牆設置)：</strong><br>`;
+                html += `<br><strong>3. 賽道寬窄 (內圍牆設置)：</strong><br>`;
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
                 
                 sections.forEach(sec => {
                     const isWide = tossCoin() === "Heads";
-                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (Wide)</span>" : "<span style='color:#d90429'>窄 (Narrow) - 有障礙</span>"}</strong><br>`;
+                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (Wide)</span>" : "<span style='color:#d90429'>窄 (Narrow) - 阻擋內道</span>"}</strong><br>`;
+                    // 抽到窄賽道，就在內側畫牆壁
                     if (!isWide) drawNarrowWall(sec);
                 });
 
                 const startZone = Math.floor(Math.random() * 6) + 1;
-                html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">區域 ${startZone}</span><br>`;
+                html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">區域 ${startZone}</span> (刻度 1~6)<br>`;
                 drawStartCar(s.id, startZone);
 
             } else {
-                /* ================= 決賽 (Obstacle Challenge) ================= */
-                html += `<div class="section-title">🏁 Obstacle 決賽抽籤結果</div>`;
+                // ---------- 決賽邏輯 ----------
+                html += `<div class="section-title">🏁 決賽 (Obstacle) 抽籤結果</div>`;
                 html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold;">${dirChn}</span><br>`;
 
                 const s = getSectionInfo();
