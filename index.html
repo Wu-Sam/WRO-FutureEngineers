@@ -6,8 +6,24 @@
     <title>WRO 2026 官方抽籤系統 (雙模式切換版)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
-        h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 0;}
+        h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 20px;} /* 增加上方邊距避免被時間擋住 */
         
+        /* ================= 左上角時鐘 ================= */
+        #realtime-clock {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #0056b3;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border: 2px solid #0056b3;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+
         /* 模式切換頁籤 (Tabs) */
         .tab-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
         .tab-btn { font-size: 18px; padding: 12px 30px; border: 2px solid #0056b3; border-radius: 30px; background-color: #fff; color: #0056b3; font-weight: bold; cursor: pointer; transition: all 0.3s; }
@@ -58,7 +74,9 @@
         }
     </style>
 </head>
-<body onload="switchMode('open')">
+<body onload="init()">
+
+    <div id="realtime-clock">讀取時間中...</div>
 
     <h1>WRO 2026 官方抽籤系統</h1>
 
@@ -101,6 +119,28 @@
     </div>
 
     <script>
+        // ================= 頁面初始化 =================
+        function init() {
+            updateClock(); // 先執行一次避免延遲
+            setInterval(updateClock, 1000); // 設定每秒更新
+            switchMode('open'); // 載入預設模式
+        }
+
+        // ================= 時鐘更新邏輯 =================
+        function updateClock() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            // 格式化為: 2026年07月19日 14:05:09
+            const timeString = `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+            document.getElementById('realtime-clock').innerText = timeString;
+        }
+
         let currentMode = 'open'; // 預設模式
 
         // ================= 模式切換邏輯 =================
@@ -137,7 +177,6 @@
         };
 
         // ================= 決賽 (Obstacle) 座標與邏輯 =================
-        // 修改為嚴格的單柱與雙柱分流牌庫
         const CARD_LAYOUTS = {
             // 單一柱子 (必定在 p2 中間) - 1~4號卡牌
             1: [["p2", "Green", "Inner"]], 
@@ -267,10 +306,9 @@
                 const config = { single_sign_section: s.id };
                 html += `<strong>2. 單一標誌區：</strong> <span style="color:#007bff; font-weight:bold;">${s.name}</span><br>`;
 
-                // 【規則修正】：單一柱子只能從 1~4 號牌中抽取 (保證在 p2)
                 const singleCardNum = Math.floor(Math.random() * 4) + 1;
                 config.single_sign_card = singleCardNum;
-                const singleData = CARD_LAYOUTS[singleCardNum][0]; // 例如: ["p2", "Green", "Inner"]
+                const singleData = CARD_LAYOUTS[singleCardNum][0];
                 const colorName = singleData[1] === "Green" ? "綠柱" : "紅柱";
                 const colorHex = singleData[1] === "Green" ? "#00a800" : "#d90429";
                 const laneName = singleData[2] === "Inner" ? "內側" : "外側";
@@ -279,7 +317,6 @@
 
                 html += `<br><strong>4. 其他區域卡牌分配 (雙柱)：</strong><br>`;
                 
-                // 【規則修正】：其他賽段必定抽取雙柱！從 5~36 號牌庫中隨機抽洗
                 let doubleDeck = Array.from({length: 32}, (_, i) => i + 5); 
                 doubleDeck.sort(() => Math.random() - 0.5);
 
