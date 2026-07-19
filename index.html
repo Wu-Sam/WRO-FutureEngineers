@@ -60,7 +60,7 @@
 </head>
 <body onload="switchMode('open')">
 
-    <h1>WRO 2025 官方抽籤系統</h1>
+    <h1>WRO 2026 官方抽籤系統</h1>
 
     <div class="tab-container">
         <button id="tab-open" class="tab-btn active" onclick="switchMode('open')">🏁 Open Challenge (資格賽)</button>
@@ -106,15 +106,13 @@
         // ================= 模式切換邏輯 =================
         function switchMode(mode) {
             currentMode = mode;
-            document.getElementById('overlays-layer').innerHTML = ''; // 清空場地
+            document.getElementById('overlays-layer').innerHTML = ''; 
             document.getElementById('result-info').innerHTML = '<strong>請點擊上方按鈕進行抽籤...</strong>';
 
-            // 更新頁籤 UI
             document.getElementById('tab-open').classList.remove('active');
             document.getElementById('tab-obstacle').classList.remove('active');
             document.getElementById(`tab-${mode}`).classList.add('active');
 
-            // 更新按鈕與提示文字
             const btn = document.getElementById('main-draw-btn');
             const hint = document.getElementById('mode-hint');
 
@@ -123,14 +121,12 @@
                 hint.innerHTML = '資格賽模式：抽出牆體寬窄 (窄牆將以警示塊阻擋內側車道) 與 1-6 號起點。';
             } else {
                 btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
-                hint.innerHTML = '決賽模式：包含單一標誌、36卡牌障礙物配置，以及停車場強制偏移規則。';
+                hint.innerHTML = '決賽模式：包含單一標誌 (必定在中間)、雙柱配置 (必定在前後)，以及停車場。';
             }
 
-            // 自動執行一次抽籤
             runDraw();
         }
 
-        // ================= 共用抽籤工具 =================
         const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
         const getSectionInfo = () => {
             const t1 = tossCoin(), t2 = tossCoin();
@@ -141,25 +137,49 @@
         };
 
         // ================= 決賽 (Obstacle) 座標與邏輯 =================
+        // 修改為嚴格的單柱與雙柱分流牌庫
         const CARD_LAYOUTS = {
-            1: [["p3", "Green", "Inner"]], 2: [["p3", "Red", "Inner"]],
-            3: [["p2", "Green", "Inner"]], 4: [["p2", "Red", "Inner"]],
-            5: [["p1", "Green", "Inner"]], 6: [["p1", "Red", "Inner"]],
-            7: [["p3", "Green", "Outer"]], 8: [["p3", "Red", "Outer"]],
-            9: [["p2", "Green", "Outer"]], 10: [["p2", "Red", "Outer"]],
-            11: [["p1", "Green", "Inner"]], 12: [["p1", "Red", "Inner"]],
-            13: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]], 14: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
-            15: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]], 16: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
-            17: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]], 18: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
-            19: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]], 20: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
-            21: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]], 22: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
-            23: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]], 24: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
-            25: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]], 26: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
-            27: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]], 28: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
-            29: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]], 30: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
-            31: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]], 32: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
-            33: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 34: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
-            35: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
+            // 單一柱子 (必定在 p2 中間) - 1~4號卡牌
+            1: [["p2", "Green", "Inner"]], 
+            2: [["p2", "Red", "Inner"]],
+            3: [["p2", "Green", "Outer"]], 
+            4: [["p2", "Red", "Outer"]],
+
+            // 雙柱組合 (必定在 p1 與 p3) - 5~20 號卡牌為 16 種獨特組合
+            5: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
+            6: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
+            7: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]],
+            8: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
+            9: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]],
+            10: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
+            11: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]],
+            12: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
+            13: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]],
+            14: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
+            15: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]],
+            16: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
+            17: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]],
+            18: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
+            19: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]],
+            20: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]],
+            
+            // 為了補齊原本 36 張卡牌的需求，將 16 種雙柱組合重複一次 (21~36)
+            21: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
+            22: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
+            23: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]],
+            24: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
+            25: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]],
+            26: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
+            27: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]],
+            28: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
+            29: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]],
+            30: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
+            31: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]],
+            32: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
+            33: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]],
+            34: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
+            35: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]],
+            36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
         };
 
         const COORDS = {
@@ -193,7 +213,6 @@
         function drawNarrowWall(secId) {
             const el = document.createElement('div');
             el.className = 'wall-block';
-            // 填滿該段的 Inner 內側車道 (18% 到 26%)
             if(secId === "Top") { el.style.left='26%'; el.style.top='18%'; el.style.width='48%'; el.style.height='8%'; }
             if(secId === "Right") { el.style.left='74%'; el.style.top='26%'; el.style.width='8%'; el.style.height='48%'; }
             if(secId === "Bottom") { el.style.left='26%'; el.style.top='74%'; el.style.width='48%'; el.style.height='8%'; }
@@ -202,11 +221,9 @@
         }
 
         function drawStartCar(secId, zone) {
-            // 劃分直道為6格，算出百分比中心點 (30, 38, 46, 54, 62, 70)
             const offsets = [30, 38, 46, 54, 62, 70];
             const el = document.createElement('div');
             el.className = 'start-car'; el.innerHTML = "🚗";
-            // 起點車固定放在 Outer 車道
             if(secId === "Top") { el.style.left = `${offsets[zone-1]}%`; el.style.top = '14%'; }
             if(secId === "Right") { el.style.left = '86%'; el.style.top = `${offsets[zone-1]}%`; }
             if(secId === "Bottom") { el.style.left = `${offsets[zone-1]}%`; el.style.top = '86%'; }
@@ -216,13 +233,12 @@
 
         // ================= 核心抽籤執行 =================
         function runDraw() {
-            document.getElementById('overlays-layer').innerHTML = ''; // 清除舊圖層
+            document.getElementById('overlays-layer').innerHTML = ''; 
             let html = "";
             const dirEng = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
             const dirChn = dirEng === "Clockwise" ? "順時針" : "逆時針";
 
             if (currentMode === 'open') {
-                // ---------- 資格賽邏輯 ----------
                 html += `<div class="section-title">🏁 資格賽 (Open) 抽籤結果</div>`;
                 html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold;">${dirChn}</span><br>`;
                 
@@ -236,7 +252,6 @@
                 sections.forEach(sec => {
                     const isWide = tossCoin() === "Heads";
                     html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (Wide)</span>" : "<span style='color:#d90429'>窄 (Narrow) - 阻擋內道</span>"}</strong><br>`;
-                    // 抽到窄賽道，就在內側畫牆壁
                     if (!isWide) drawNarrowWall(sec);
                 });
 
@@ -245,7 +260,6 @@
                 drawStartCar(s.id, startZone);
 
             } else {
-                // ---------- 決賽邏輯 ----------
                 html += `<div class="section-title">🏁 決賽 (Obstacle) 抽籤結果</div>`;
                 html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold;">${dirChn}</span><br>`;
 
@@ -253,15 +267,21 @@
                 const config = { single_sign_section: s.id };
                 html += `<strong>2. 單一標誌區：</strong> <span style="color:#007bff; font-weight:bold;">${s.name}</span><br>`;
 
-                const colorToss = tossCoin();
-                config.single_sign_card = colorToss === "Heads" ? 9 : 10;
-                const colorChn = colorToss === "Heads" ? "<span style='color:#00a800;'>綠柱 (卡牌 #9)</span>" : "<span style='color:#d90429;'>紅柱 (卡牌 #10)</span>";
-                html += `<strong>3. 單一標誌顏色：</strong> ${colorChn}<br>`;
+                // 【規則修正】：單一柱子只能從 1~4 號牌中抽取 (保證在 p2)
+                const singleCardNum = Math.floor(Math.random() * 4) + 1;
+                config.single_sign_card = singleCardNum;
+                const singleData = CARD_LAYOUTS[singleCardNum][0]; // 例如: ["p2", "Green", "Inner"]
+                const colorName = singleData[1] === "Green" ? "綠柱" : "紅柱";
+                const colorHex = singleData[1] === "Green" ? "#00a800" : "#d90429";
+                const laneName = singleData[2] === "Inner" ? "內側" : "外側";
+                
+                html += `<strong>3. 單一標誌配置：</strong> <span style='color:${colorHex}; font-weight:bold;'>${colorName} (${laneName} - 卡牌 #${singleCardNum})</span><br>`;
 
-                html += `<br><strong>4. 其他區域卡牌分配：</strong><br>`;
-                let deck = Array.from({length: 36}, (_, i) => i + 1);
-                deck = deck.filter(c => c !== config.single_sign_card);
-                deck.sort(() => Math.random() - 0.5);
+                html += `<br><strong>4. 其他區域卡牌分配 (雙柱)：</strong><br>`;
+                
+                // 【規則修正】：其他賽段必定抽取雙柱！從 5~36 號牌庫中隨機抽洗
+                let doubleDeck = Array.from({length: 32}, (_, i) => i + 5); 
+                doubleDeck.sort(() => Math.random() - 0.5);
 
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
@@ -269,9 +289,9 @@
                 
                 config.other_sections_layout = {};
                 other_sections.forEach(sec => {
-                    const card = deck.pop();
+                    const card = doubleDeck.pop();
                     config.other_sections_layout[sec] = card;
-                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區 獲得 <strong>卡牌 #${card}</strong><br>`;
+                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區 獲得 <strong>卡牌 #${card} (雙柱)</strong><br>`;
                 });
 
                 const p = getSectionInfo();
