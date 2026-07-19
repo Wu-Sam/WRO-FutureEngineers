@@ -32,7 +32,7 @@
 
         /* 按鈕控制區 */
         .controls { text-align: center; margin-bottom: 20px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn-group { display: flex; justify-content: center; gap: 15px; } /* 讓按鈕並排 */
+        .btn-group { display: flex; justify-content: center; gap: 15px; } 
         button.draw-btn { background-color: #28a745; color: white; font-weight: bold; font-size: 18px; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
         button.draw-btn:hover { background-color: #218838; transform: scale(1.02); }
         
@@ -65,12 +65,26 @@
         .pillar-green { background-color: #00a800; }
         .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);}
 
-        /* 資格賽：牆體與起點車 */
+        /* 資格賽：牆體、起點格與車輛 */
         .wall-block {
             position: absolute; z-index: 6; border: 2px solid #222; border-radius: 2px;
             background: repeating-linear-gradient(45deg, #ffc107, #ffc107 10px, #333 10px, #333 20px);
             box-shadow: 2px 2px 5px rgba(0,0,0,0.5); opacity: 0.9;
         }
+        
+        /* 1-6 號起點格 */
+        .start-zone-marker {
+            position: absolute; transform: translate(-50%, -50%); z-index: 5;
+            border: 2px dashed #999; background-color: rgba(255, 255, 255, 0.8);
+            width: 6.5%; aspect-ratio: 1 / 1; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: bold; color: #666;
+        }
+        /* 被抽中的那格高亮 */
+        .start-zone-active {
+            border-color: #28a745; background-color: rgba(40, 167, 69, 0.3); color: #155724;
+        }
+
         .start-car {
             position: absolute; transform: translate(-50%, -50%); z-index: 15;
             background-color: #ffc107; border: 2px solid #333; border-radius: 5px;
@@ -152,16 +166,14 @@
 
         // ================= 重設按鈕邏輯 =================
         function resetDraw() {
-            // 清空賽道上的動態物件
             document.getElementById('overlays-layer').innerHTML = ''; 
-            // 恢復文字說明區域
             document.getElementById('result-info').innerHTML = '<strong>請點擊上方按鈕進行抽籤...</strong>';
         }
 
         // ================= 模式切換邏輯 =================
         function switchMode(mode) {
             currentMode = mode;
-            resetDraw(); // 切換模式時也自動重設畫面
+            resetDraw(); 
 
             document.getElementById('tab-open').classList.remove('active');
             document.getElementById('tab-obstacle').classList.remove('active');
@@ -264,6 +276,26 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
+        // 畫出 1~6 號起點網格
+        function drawStartGrid(secId, activeZone) {
+            const offsets = [30, 38, 46, 54, 62, 70];
+            for (let i = 0; i < 6; i++) {
+                const el = document.createElement('div');
+                // 如果是抽中的區域，加上高亮的 class，否則只顯示數字
+                el.className = `start-zone-marker ${i + 1 === activeZone ? 'start-zone-active' : ''}`;
+                // 只有未被車子蓋住的格子才顯示數字，以免畫面太雜
+                el.innerHTML = (i + 1 === activeZone) ? '' : (i + 1);
+                
+                if (secId === "Top") { el.style.left = `${offsets[i]}%`; el.style.top = '14%'; }
+                if (secId === "Right") { el.style.left = '86%'; el.style.top = `${offsets[i]}%`; }
+                if (secId === "Bottom") { el.style.left = `${offsets[i]}%`; el.style.top = '86%'; }
+                if (secId === "Left") { el.style.left = '14%'; el.style.top = `${offsets[i]}%`; }
+                
+                document.getElementById('overlays-layer').appendChild(el);
+            }
+        }
+
+        // 把車子精準疊在被選中的格子上
         function drawStartCar(secId, zone) {
             const offsets = [30, 38, 46, 54, 62, 70];
             const el = document.createElement('div');
@@ -277,7 +309,7 @@
 
         // ================= 核心抽籤執行 =================
         function runDraw() {
-            resetDraw(); // 每次抽籤前先清空畫面
+            resetDraw(); 
             let html = "";
             const dirEng = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
             const dirChn = dirEng === "Clockwise" ? "順時針" : "逆時針";
@@ -300,7 +332,10 @@
                 });
 
                 const startZone = Math.floor(Math.random() * 6) + 1;
-                html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">區域 ${startZone}</span> (刻度 1~6)<br>`;
+                html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">第 ${startZone} 格</span> (已於右側賽道標示)<br>`;
+                
+                // 先畫出 1-6 號的格子底線，再把車子疊在抽中的位置上
+                drawStartGrid(s.id, startZone);
                 drawStartCar(s.id, startZone);
 
             } else {
