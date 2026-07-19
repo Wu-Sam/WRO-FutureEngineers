@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2026 官方抽籤系統 (雙模式切換版)</title>
+    <title>WRO 2026 官方抽籤系統 (加入方向箭頭)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
         h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 20px;}
@@ -59,6 +59,20 @@
         .line-h-orange { height: 6px; width: 16.5%; background-color: #ff7b00; }
         
         /* ================= 視覺化元素 ================= */
+        
+        /* 中央行駛方向箭頭 (浮水印效果) */
+        .direction-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 200px;
+            font-weight: bold;
+            color: rgba(217, 4, 41, 0.15); /* 半透明紅色 */
+            z-index: 5; /* 放在內牆之上，但不會擋住點擊 */
+            pointer-events: none;
+        }
+
         /* 決賽：柱子與停車場 */
         .overlay { position: absolute; transform: translate(-50%, -50%); width: 3.5%; aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 2px 2px 6px rgba(0,0,0,0.8); z-index: 10; border: 2.5px solid #fff; transition: all 0.4s ease;}
         .pillar-red { background-color: #d90429; }
@@ -141,14 +155,12 @@
     </div>
 
     <script>
-        // ================= 頁面初始化 =================
         function init() {
             updateClock(); 
             setInterval(updateClock, 1000); 
             switchMode('open'); 
         }
 
-        // ================= 時鐘更新 =================
         function updateClock() {
             const now = new Date();
             const year = now.getFullYear();
@@ -198,7 +210,6 @@
             return { id: "Bottom", name: "下方區 (Bottom)" };
         };
 
-        // ================= 決賽座標與邏輯 =================
         const CARD_LAYOUTS = {
             1: [["p2", "Green", "Inner"]], 2: [["p2", "Red", "Inner"]],
             3: [["p2", "Green", "Outer"]], 4: [["p2", "Red", "Outer"]],
@@ -243,6 +254,14 @@
             "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
         };
 
+        // 繪製行駛方向箭頭
+        function drawDirectionArrow(dirEng) {
+            const arrowEl = document.createElement('div');
+            arrowEl.className = 'direction-arrow';
+            arrowEl.innerHTML = dirEng === "Clockwise" ? "↻" : "↺";
+            document.getElementById('overlays-layer').appendChild(arrowEl);
+        }
+
         function addPillar(secId, pos, color, row, hasParking) {
             const actualRow = hasParking ? "Inner" : row; 
             const xy = COORDS[secId][actualRow][pos];
@@ -263,7 +282,6 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // ================= 資格賽 (Open) 座標與邏輯 =================
         function drawNarrowWall(secId) {
             const el = document.createElement('div');
             el.className = 'wall-block';
@@ -274,9 +292,8 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 畫出起點網格 (寬賽段 6 格，窄賽段 3 格)
         function drawStartGrid(secId, activeZone, isWide) {
-            const offsets = [34, 50, 66]; // 在賽段長度的 3 個位置
+            const offsets = [34, 50, 66]; 
             const numZones = isWide ? 6 : 3;
 
             for (let i = 0; i < numZones; i++) {
@@ -284,11 +301,10 @@
                 el.className = `start-zone-marker ${i + 1 === activeZone ? 'start-zone-active' : ''}`;
                 el.innerHTML = (i + 1 === activeZone) ? '' : (i + 1);
                 
-                const isInner = i >= 3; // 第 4~6 個格子在內線
+                const isInner = i >= 3; 
                 const posIndex = i % 3; 
                 const offset = offsets[posIndex];
                 
-                // 根據內外線決定距離邊緣的位置
                 let lanePos = isInner ? 22 : 14; 
                 if (secId === "Bottom" || secId === "Right") {
                     lanePos = isInner ? 78 : 86;
@@ -303,7 +319,6 @@
             }
         }
 
-        // 畫出車輛
         function drawStartCar(secId, zone, isWide) {
             const offsets = [34, 50, 66];
             const el = document.createElement('div');
@@ -327,16 +342,18 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // ================= 核心抽籤執行 =================
         function runDraw() {
             resetDraw(); 
             let html = "";
             const dirEng = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
-            const dirChn = dirEng === "Clockwise" ? "順時針" : "逆時針";
+            const dirChn = dirEng === "Clockwise" ? "順時針 (↻)" : "逆時針 (↺)";
+
+            // 繪製中央大箭頭
+            drawDirectionArrow(dirEng);
 
             if (currentMode === 'open') {
                 html += `<div class="section-title">🏁 資格賽 (Open) 抽籤結果</div>`;
-                html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold;">${dirChn}</span><br>`;
+                html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold; font-size: 1.1em;">${dirChn}</span><br>`;
                 
                 const s = getSectionInfo();
                 html += `<strong>2. 起始賽段：</strong> <span style="color:#007bff; font-weight:bold;">${s.name}</span><br>`;
@@ -345,7 +362,7 @@
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
                 
-                let startSectionIsWide = true; // 紀錄起點賽段是寬還是窄
+                let startSectionIsWide = true; 
 
                 sections.forEach(sec => {
                     const isWide = tossCoin() === "Heads";
@@ -356,7 +373,6 @@
                     if (!isWide) drawNarrowWall(sec);
                 });
 
-                // 根據起點賽段的寬窄來決定抽籤的格子數量
                 const maxZone = startSectionIsWide ? 6 : 3;
                 const startZone = Math.floor(Math.random() * maxZone) + 1;
                 
@@ -369,9 +385,8 @@
                 drawStartCar(s.id, startZone, startSectionIsWide);
 
             } else {
-                // ... (決賽抽籤邏輯保持不變)
                 html += `<div class="section-title">🏁 決賽 (Obstacle) 抽籤結果</div>`;
-                html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold;">${dirChn}</span><br>`;
+                html += `<strong>1. 行駛方向：</strong> <span style="color:#d90429; font-weight:bold; font-size: 1.1em;">${dirChn}</span><br>`;
 
                 const s = getSectionInfo();
                 const config = { single_sign_section: s.id };
