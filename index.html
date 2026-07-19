@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2026 官方抽籤系統 (完美規則版)</title>
+    <title>WRO 2026 官方抽籤系統</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
         h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 20px;}
@@ -43,10 +43,10 @@
         .info-panel { flex: 1; min-width: 320px; max-width: 400px; background: #fff; padding: 25px; border-radius: 8px; line-height: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-top: 5px solid #0056b3; font-size: 16px; }
         .section-title { font-weight: bold; color: #0056b3; margin-top: 5px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
         
-        .map-panel { flex: 2; min-width: 500px; max-width: 800px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; }
+        .map-panel { flex: 2; min-width: 500px; max-width: 900px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); display: flex; justify-content: center; align-items: center; }
         
-        /* 賽道底板 */
-        .map-container { position: relative; width: 100%; max-width: 700px; aspect-ratio: 1 / 1; background-color: #fff; overflow: hidden; border-radius: 8px; }
+        /* 賽道底板：恢復 1:1 比例 */
+        .map-container { position: relative; width: 100%; max-width: 750px; aspect-ratio: 1 / 1; background-color: #fff; overflow: hidden; border-radius: 8px; }
         
         /* 賽道標線 */
         .track-wall { position: absolute; box-sizing: border-box; }
@@ -55,62 +55,29 @@
         .inner-wall { top: 26%; bottom: 26%; left: 26%; right: 26%; border: 6px solid #fff; border-radius: 4%; background-color: #f0f2f5; box-shadow: inset 0 0 0 2px #ddd; z-index: 4; }
 
         .boundary-line { position: absolute; z-index: 3; }
-        .line-v-blue { width: 6px; height: 16.5%; background-color: #0056b3; }
-        .line-h-orange { height: 6px; width: 16.5%; background-color: #ff7b00; }
+        .line-v-blue { width: 6px; height: 16%; background-color: #0056b3; }
+        .line-h-orange { height: 6px; width: 16%; background-color: #ff7b00; }
         
-        /* ================= 視覺化元素 ================= */
-        
-        /* 中央行駛方向箭頭 (浮水印效果) */
+        /* 中央行駛方向箭頭 */
         .direction-arrow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 200px;
-            font-weight: bold;
-            color: rgba(217, 4, 41, 0.15); /* 半透明紅色 */
-            z-index: 5; 
-            pointer-events: none;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 200px; font-weight: bold; color: rgba(217, 4, 41, 0.15);
+            z-index: 5; pointer-events: none;
         }
 
         /* 決賽：柱子與停車場 */
         .overlay { position: absolute; transform: translate(-50%, -50%); width: 3.5%; aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 2px 2px 6px rgba(0,0,0,0.8); z-index: 10; border: 2.5px solid #fff; transition: all 0.4s ease;}
         .pillar-red { background-color: #d90429; }
         .pillar-green { background-color: #00a800; }
-        
-        /* 停車場：稍微縮小並偏離正中心 */
-        .parking-zone { 
-            position: absolute; 
-            border: 3px dashed #F702F9; 
-            background-color: rgba(247, 2, 249, 0.25); 
-            z-index: 5; 
-            display: flex; align-items: center; justify-content: center; 
-            color: #F702F9; font-weight: bold; font-size: 20px; 
-            border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
+        .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);}
 
         /* 資格賽：牆體、起點格與車輛 */
-        .wall-block {
-            position: absolute; z-index: 6; border: 2px solid #222; border-radius: 2px;
-            background: repeating-linear-gradient(45deg, #ffc107, #ffc107 10px, #333 10px, #333 20px);
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5); opacity: 0.9;
-        }
+        .wall-block { position: absolute; z-index: 6; border: 2px solid #222; border-radius: 2px; background: repeating-linear-gradient(45deg, #ffc107, #ffc107 10px, #333 10px, #333 20px); box-shadow: 2px 2px 5px rgba(0,0,0,0.5); opacity: 0.9; }
+        .start-zone-marker { position: absolute; transform: translate(-50%, -50%); z-index: 5; border: 2px dashed #999; background-color: rgba(255, 255, 255, 0.8); width: 6.5%; aspect-ratio: 1 / 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #666; }
+        .start-zone-active { border-color: #28a745; background-color: rgba(40, 167, 69, 0.3); color: #155724; }
         
-        /* 起點格 */
-        .start-zone-marker {
-            position: absolute; transform: translate(-50%, -50%); z-index: 5;
-            border: 2px dashed #999; background-color: rgba(255, 255, 255, 0.8);
-            width: 6.5%; aspect-ratio: 1 / 1; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px; font-weight: bold; color: #666;
-        }
-        /* 被抽中的那格高亮 */
-        .start-zone-active {
-            border-color: #28a745; background-color: rgba(40, 167, 69, 0.3); color: #155724;
-        }
-
         .start-car {
-            position: absolute; transform: translate(-50%, -50%); z-index: 15;
+            position: absolute; z-index: 15;
             background-color: #ffc107; border: 2px solid #333; border-radius: 5px;
             width: 5.5%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
             font-size: 22px; box-shadow: 2px 2px 6px rgba(0,0,0,0.7);
@@ -134,7 +101,7 @@
             <button class="reset-btn" onclick="resetDraw()">🔄 重設畫面</button>
         </div>
         <div id="mode-hint" style="margin-top: 15px; font-size: 14px; color: #666;">
-            資格賽模式：抽出牆體寬窄與起點位置 (共 3 排，每排 2 個)。
+            資格賽模式：抽出牆體寬窄與起點位置 (寬場地為 3排×2格，窄場地為 3排×1格)。
         </div>
     </div>
 
@@ -158,7 +125,6 @@
                 <div class="boundary-line line-h-orange" style="right: 10%; bottom: 26%; transform: translateY(50%);"></div>
 
                 <div class="track-wall inner-wall"></div>
-                
                 <div id="overlays-layer"></div>
             </div>
         </div>
@@ -166,21 +132,12 @@
 
     <script>
         function init() {
-            updateClock(); 
-            setInterval(updateClock, 1000); 
-            switchMode('open'); 
+            updateClock(); setInterval(updateClock, 1000); switchMode('open'); 
         }
 
         function updateClock() {
             const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            
-            const timeString = `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+            const timeString = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
             document.getElementById('realtime-clock').innerText = timeString;
         }
 
@@ -194,21 +151,12 @@
         function switchMode(mode) {
             currentMode = mode;
             resetDraw(); 
-
             document.getElementById('tab-open').classList.remove('active');
             document.getElementById('tab-obstacle').classList.remove('active');
             document.getElementById(`tab-${mode}`).classList.add('active');
-
             const btn = document.getElementById('main-draw-btn');
-            const hint = document.getElementById('mode-hint');
-
-            if (mode === 'open') {
-                btn.innerHTML = '🎲 執行資格賽 (Open) 抽籤';
-                hint.innerHTML = '資格賽模式：抽出牆體寬窄與起點位置 (共 3 排，每排 2 個)。';
-            } else {
-                btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
-                hint.innerHTML = '決賽模式：包含單一標誌、雙柱配置，以及隨機分配的非置中停車場。';
-            }
+            if (mode === 'open') { btn.innerHTML = '🎲 執行資格賽 (Open) 抽籤'; }
+            else { btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤'; }
         }
 
         const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
@@ -223,38 +171,22 @@
         const CARD_LAYOUTS = {
             1: [["p2", "Green", "Inner"]], 2: [["p2", "Red", "Inner"]],
             3: [["p2", "Green", "Outer"]], 4: [["p2", "Red", "Outer"]],
-            5: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
-            6: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
-            7: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]],
-            8: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
-            9: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]],
-            10: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
-            11: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]],
-            12: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
-            13: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]],
-            14: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
-            15: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]],
-            16: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
-            17: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]],
-            18: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
-            19: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]],
-            20: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]],
-            21: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
-            22: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
-            23: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]],
-            24: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
-            25: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]],
-            26: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
-            27: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]],
-            28: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
-            29: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]],
-            30: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
-            31: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]],
-            32: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
-            33: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]],
-            34: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
-            35: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]],
-            36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
+            5: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]], 6: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
+            7: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]], 8: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
+            9: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]], 10: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
+            11: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]], 12: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
+            13: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]], 14: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
+            15: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]], 16: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
+            17: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]], 18: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
+            19: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 20: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]],
+            21: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]], 22: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
+            23: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]], 24: [["p3", "Green", "Inner"], ["p1", "Red", "Outer"]],
+            25: [["p3", "Red", "Inner"], ["p1", "Green", "Inner"]], 26: [["p3", "Red", "Inner"], ["p1", "Red", "Inner"]],
+            27: [["p3", "Red", "Inner"], ["p1", "Green", "Outer"]], 28: [["p3", "Red", "Inner"], ["p1", "Red", "Outer"]],
+            29: [["p3", "Green", "Outer"], ["p1", "Green", "Inner"]], 30: [["p3", "Green", "Outer"], ["p1", "Red", "Inner"]],
+            31: [["p3", "Green", "Outer"], ["p1", "Green", "Outer"]], 32: [["p3", "Green", "Outer"], ["p1", "Red", "Outer"]],
+            33: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]], 34: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
+            35: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
         };
 
         const COORDS = {
@@ -262,6 +194,26 @@
             "Right": { "Outer": { "p1": [86, 34], "p2": [86, 50], "p3": [86, 66] }, "Inner": { "p1": [78, 34], "p2": [78, 50], "p3": [78, 66] } },
             "Bottom": { "Outer": { "p1": [66, 86], "p2": [50, 86], "p3": [34, 86] }, "Inner": { "p1": [66, 78], "p2": [50, 78], "p3": [34, 78] } },
             "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
+        };
+
+        // 🎯 全新 3x2 起點格座標對應表
+        const START_GRIDS = {
+            "Top": {
+                1: [34, 14], 2: [50, 14], 3: [66, 14], // Outer
+                4: [34, 22], 5: [50, 22], 6: [66, 22]  // Inner
+            },
+            "Right": {
+                1: [86, 34], 2: [86, 50], 3: [86, 66], // Outer
+                4: [78, 34], 5: [78, 50], 6: [78, 66]  // Inner
+            },
+            "Bottom": {
+                1: [66, 86], 2: [50, 86], 3: [34, 86], // Outer
+                4: [66, 78], 5: [50, 78], 6: [34, 78]  // Inner
+            },
+            "Left": {
+                1: [14, 66], 2: [14, 50], 3: [14, 34], // Outer
+                4: [22, 66], 5: [22, 50], 6: [22, 34]  // Inner
+            }
         };
 
         function drawDirectionArrow(dirEng) {
@@ -276,16 +228,13 @@
             const xy = COORDS[secId][actualRow][pos];
             const el = document.createElement('div');
             el.className = `overlay ${color === "Red" ? 'pillar-red' : 'pillar-green'}`;
-            el.style.left = `${xy[0]}%`;
-            el.style.top = `${xy[1]}%`;
+            el.style.left = `${xy[0]}%`; el.style.top = `${xy[1]}%`;
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 停車場位置偏移 (不再置中)
         function drawParking(secId) {
             const el = document.createElement('div');
             el.className = 'parking-zone'; el.innerHTML = "P";
-            // 這裡將預設的 44% (置中) 改為偏移位置，例如偏向區域前端或後端
             if(secId === "Top") { el.style.left='58%'; el.style.top='10%'; el.style.width='10%'; el.style.height='8%'; }
             if(secId === "Right") { el.style.left='82%'; el.style.top='58%'; el.style.width='8%'; el.style.height='10%'; }
             if(secId === "Bottom") { el.style.left='32%'; el.style.top='82%'; el.style.width='10%'; el.style.height='8%'; }
@@ -303,54 +252,41 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 資格賽起點格：3 排，每排 2 個 (如果窄道則只有外側 1 個)
         function drawStartGrid(secId, activeZone, isWide) {
-            const offsets = [34, 50, 66]; // 3 排的位置
             const numZones = isWide ? 6 : 3;
 
-            for (let i = 0; i < numZones; i++) {
+            for (let i = 1; i <= numZones; i++) {
                 const el = document.createElement('div');
-                el.className = `start-zone-marker ${i + 1 === activeZone ? 'start-zone-active' : ''}`;
-                el.innerHTML = (i + 1 === activeZone) ? '' : (i + 1);
+                el.className = `start-zone-marker ${i === activeZone ? 'start-zone-active' : ''}`;
+                el.innerHTML = (i === activeZone) ? '' : i;
                 
-                // i = 0,1,2 為第一列(外側)，i = 3,4,5 為第二列(內側)
-                const isInner = i >= 3; 
-                const posIndex = i % 3; // 對應 3 排的哪一排
-                const offset = offsets[posIndex];
-                
-                let lanePos = isInner ? 22 : 14; 
-                if (secId === "Bottom" || secId === "Right") {
-                    lanePos = isInner ? 78 : 86;
-                }
-
-                if (secId === "Top") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-                if (secId === "Right") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
-                if (secId === "Bottom") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-                if (secId === "Left") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
+                // 寬場地印 1~6，窄場地只印 1~3 (外側)
+                const xy = START_GRIDS[secId][i];
+                el.style.left = `${xy[0]}%`; 
+                el.style.top = `${xy[1]}%`; 
                 
                 document.getElementById('overlays-layer').appendChild(el);
             }
         }
+        
+        function getCarRotation(secId, dirEng) {
+            const isCW = dirEng === "Clockwise";
+            if (secId === "Top") return isCW ? "scaleX(1)" : "scaleX(-1)";
+            if (secId === "Right") return isCW ? "rotate(90deg)" : "rotate(-90deg)";
+            if (secId === "Bottom") return isCW ? "scaleX(-1)" : "scaleX(1)";
+            if (secId === "Left") return isCW ? "rotate(-90deg)" : "rotate(90deg)";
+            return "none";
+        }
 
-        function drawStartCar(secId, zone, isWide) {
-            const offsets = [34, 50, 66];
+        function drawStartCar(secId, zone, dirEng) {
             const el = document.createElement('div');
             el.className = 'start-car'; el.innerHTML = "🚗";
             
-            const i = zone - 1;
-            const isInner = i >= 3;
-            const posIndex = i % 3;
-            const offset = offsets[posIndex];
+            const xy = START_GRIDS[secId][zone];
+            el.style.left = `${xy[0]}%`; 
+            el.style.top = `${xy[1]}%`; 
             
-            let lanePos = isInner ? 22 : 14; 
-            if (secId === "Bottom" || secId === "Right") {
-                lanePos = isInner ? 78 : 86;
-            }
-
-            if(secId === "Top") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-            if(secId === "Right") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
-            if(secId === "Bottom") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-            if(secId === "Left") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
+            el.style.transform = `translate(-50%, -50%) ${getCarRotation(secId, dirEng)}`;
             
             document.getElementById('overlays-layer').appendChild(el);
         }
@@ -373,14 +309,11 @@
                 html += `<br><strong>3. 賽道寬窄 (內圍牆設置)：</strong><br>`;
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
-                
                 let startSectionIsWide = true; 
 
                 sections.forEach(sec => {
                     const isWide = tossCoin() === "Heads";
-                    if (sec === s.id) {
-                        startSectionIsWide = isWide;
-                    }
+                    if (sec === s.id) startSectionIsWide = isWide;
                     html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (3排×2格)</span>" : "<span style='color:#d90429'>窄 (3排×1格)</span>"}</strong><br>`;
                     if (!isWide) drawNarrowWall(sec);
                 });
@@ -389,12 +322,10 @@
                 const startZone = Math.floor(Math.random() * maxZone) + 1;
                 
                 html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">第 ${startZone} 格</span><br>`;
-                if (!startSectionIsWide) {
-                    html += `<span style="color:#666; font-size: 14px;">(註：起點賽段為窄道，內側封閉，故只有 1~3 號格)</span><br>`;
-                }
+                if (!startSectionIsWide) html += `<span style="color:#666; font-size: 14px;">(註：起點賽段為窄道，內側被牆阻擋，故只有外側 1~3 號格)</span><br>`;
                 
                 drawStartGrid(s.id, startZone, startSectionIsWide);
-                drawStartCar(s.id, startZone, startSectionIsWide);
+                drawStartCar(s.id, startZone, dirEng);
 
             } else {
                 html += `<div class="section-title">🏁 決賽 (Obstacle) 抽籤結果</div>`;
@@ -412,12 +343,9 @@
                 const laneName = singleData[2] === "Inner" ? "內側" : "外側";
                 
                 html += `<strong>3. 單一標誌配置：</strong> <span style='color:${colorHex}; font-weight:bold;'>${colorName} (${laneName} - 卡牌 #${singleCardNum})</span><br>`;
-
                 html += `<br><strong>4. 其他區域卡牌分配 (雙柱)：</strong><br>`;
                 
-                let doubleDeck = Array.from({length: 32}, (_, i) => i + 5); 
-                doubleDeck.sort(() => Math.random() - 0.5);
-
+                let doubleDeck = Array.from({length: 32}, (_, i) => i + 5).sort(() => Math.random() - 0.5);
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
                 const other_sections = sections.filter(sec => sec !== config.single_sign_section);
@@ -439,14 +367,10 @@
                 for (const [sec, cardNum] of Object.entries(all_layouts)) {
                     const layout = CARD_LAYOUTS[cardNum];
                     const hasParking = (sec === config.parking_section);
-                    layout.forEach(pillar => {
-                        const [pos, color, row] = pillar;
-                        addPillar(sec, pos, color, row, hasParking);
-                    });
+                    layout.forEach(pillar => addPillar(sec, pillar[0], pillar[1], pillar[2], hasParking));
                 }
                 drawParking(config.parking_section);
             }
-
             document.getElementById('result-info').innerHTML = html;
         }
     </script>
