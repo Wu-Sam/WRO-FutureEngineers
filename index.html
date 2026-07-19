@@ -6,7 +6,7 @@
     <title>WRO 2026 官方抽籤系統 (雙模式切換版)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
-        h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 20px;} /* 增加上方邊距避免被時間擋住 */
+        h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 20px;}
         
         /* ================= 左上角時鐘 ================= */
         #realtime-clock {
@@ -30,9 +30,14 @@
         .tab-btn:hover { background-color: #e9ecef; }
         .tab-btn.active { background-color: #0056b3; color: #fff; box-shadow: 0 4px 8px rgba(0,86,179,0.3); }
 
+        /* 按鈕控制區 */
         .controls { text-align: center; margin-bottom: 20px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-group { display: flex; justify-content: center; gap: 15px; } /* 讓按鈕並排 */
         button.draw-btn { background-color: #28a745; color: white; font-weight: bold; font-size: 18px; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
         button.draw-btn:hover { background-color: #218838; transform: scale(1.02); }
+        
+        button.reset-btn { background-color: #dc3545; color: white; font-weight: bold; font-size: 18px; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+        button.reset-btn:hover { background-color: #c82333; transform: scale(1.02); }
         
         .main-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
         .info-panel { flex: 1; min-width: 320px; max-width: 400px; background: #fff; padding: 25px; border-radius: 8px; line-height: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-top: 5px solid #0056b3; font-size: 16px; }
@@ -86,8 +91,11 @@
     </div>
     
     <div class="controls">
-        <button class="draw-btn" id="main-draw-btn" onclick="runDraw()">🎲 執行資格賽抽籤</button>
-        <div id="mode-hint" style="margin-top: 10px; font-size: 14px; color: #666;">
+        <div class="btn-group">
+            <button class="draw-btn" id="main-draw-btn" onclick="runDraw()">🎲 執行資格賽抽籤</button>
+            <button class="reset-btn" onclick="resetDraw()">🔄 重設畫面</button>
+        </div>
+        <div id="mode-hint" style="margin-top: 15px; font-size: 14px; color: #666;">
             資格賽模式：抽出牆體寬窄 (窄牆會阻擋內側車道) 與 1-6 號起點。
         </div>
     </div>
@@ -121,9 +129,9 @@
     <script>
         // ================= 頁面初始化 =================
         function init() {
-            updateClock(); // 先執行一次避免延遲
-            setInterval(updateClock, 1000); // 設定每秒更新
-            switchMode('open'); // 載入預設模式
+            updateClock(); 
+            setInterval(updateClock, 1000); 
+            switchMode('open'); 
         }
 
         // ================= 時鐘更新邏輯 =================
@@ -136,18 +144,24 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
             
-            // 格式化為: 2026年07月19日 14:05:09
             const timeString = `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
             document.getElementById('realtime-clock').innerText = timeString;
         }
 
-        let currentMode = 'open'; // 預設模式
+        let currentMode = 'open'; 
+
+        // ================= 重設按鈕邏輯 =================
+        function resetDraw() {
+            // 清空賽道上的動態物件
+            document.getElementById('overlays-layer').innerHTML = ''; 
+            // 恢復文字說明區域
+            document.getElementById('result-info').innerHTML = '<strong>請點擊上方按鈕進行抽籤...</strong>';
+        }
 
         // ================= 模式切換邏輯 =================
         function switchMode(mode) {
             currentMode = mode;
-            document.getElementById('overlays-layer').innerHTML = ''; 
-            document.getElementById('result-info').innerHTML = '<strong>請點擊上方按鈕進行抽籤...</strong>';
+            resetDraw(); // 切換模式時也自動重設畫面
 
             document.getElementById('tab-open').classList.remove('active');
             document.getElementById('tab-obstacle').classList.remove('active');
@@ -163,8 +177,6 @@
                 btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
                 hint.innerHTML = '決賽模式：包含單一標誌 (必定在中間)、雙柱配置 (必定在前後)，以及停車場。';
             }
-
-            runDraw();
         }
 
         const tossCoin = () => Math.random() < 0.5 ? "Heads" : "Tails";
@@ -178,13 +190,8 @@
 
         // ================= 決賽 (Obstacle) 座標與邏輯 =================
         const CARD_LAYOUTS = {
-            // 單一柱子 (必定在 p2 中間) - 1~4號卡牌
-            1: [["p2", "Green", "Inner"]], 
-            2: [["p2", "Red", "Inner"]],
-            3: [["p2", "Green", "Outer"]], 
-            4: [["p2", "Red", "Outer"]],
-
-            // 雙柱組合 (必定在 p1 與 p3) - 5~20 號卡牌為 16 種獨特組合
+            1: [["p2", "Green", "Inner"]], 2: [["p2", "Red", "Inner"]],
+            3: [["p2", "Green", "Outer"]], 4: [["p2", "Red", "Outer"]],
             5: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
             6: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
             7: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]],
@@ -201,8 +208,6 @@
             18: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
             19: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]],
             20: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]],
-            
-            // 為了補齊原本 36 張卡牌的需求，將 16 種雙柱組合重複一次 (21~36)
             21: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
             22: [["p3", "Green", "Inner"], ["p1", "Red", "Inner"]],
             23: [["p3", "Green", "Inner"], ["p1", "Green", "Outer"]],
@@ -272,7 +277,7 @@
 
         // ================= 核心抽籤執行 =================
         function runDraw() {
-            document.getElementById('overlays-layer').innerHTML = ''; 
+            resetDraw(); // 每次抽籤前先清空畫面
             let html = "";
             const dirEng = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
             const dirChn = dirEng === "Clockwise" ? "順時針" : "逆時針";
