@@ -124,7 +124,7 @@
             <button class="reset-btn" onclick="resetDraw()">🔄 重設畫面</button>
         </div>
         <div id="mode-hint" style="margin-top: 15px; font-size: 14px; color: #666;">
-            資格賽模式：抽出牆體寬窄與起點位置 (寬賽段 6 格，窄賽段 3 格)。
+            資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為 單排6格 (共6格)。
         </div>
     </div>
 
@@ -194,7 +194,7 @@
 
             if (mode === 'open') {
                 btn.innerHTML = '🎲 執行資格賽 (Open) 抽籤';
-                hint.innerHTML = '資格賽模式：抽出牆體寬窄與起點位置 (寬賽段 6 格，窄賽段 3 格)。';
+                hint.innerHTML = '資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為 單排6格 (共6格)。';
             } else {
                 btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
                 hint.innerHTML = '決賽模式：包含單一標誌 (必定在中間)、雙柱配置 (必定在前後)，以及停車場。';
@@ -210,7 +210,7 @@
             return { id: "Bottom", name: "下方區 (Bottom)" };
         };
 
-        const CARD_LAYOUTS = {
+        const CARD_LAYOUTS = { /* ... 原本的 Obstacle 卡牌設定保持不變 ... */
             1: [["p2", "Green", "Inner"]], 2: [["p2", "Red", "Inner"]],
             3: [["p2", "Green", "Outer"]], 4: [["p2", "Red", "Outer"]],
             5: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
@@ -247,11 +247,52 @@
             36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
         };
 
-        const COORDS = {
+        const COORDS = { /* ... 決賽柱子座標維持不變 ... */
             "Top": { "Outer": { "p1": [34, 14], "p2": [50, 14], "p3": [66, 14] }, "Inner": { "p1": [34, 22], "p2": [50, 22], "p3": [66, 22] } },
             "Right": { "Outer": { "p1": [86, 34], "p2": [86, 50], "p3": [86, 66] }, "Inner": { "p1": [78, 34], "p2": [78, 50], "p3": [78, 66] } },
             "Bottom": { "Outer": { "p1": [66, 86], "p2": [50, 86], "p3": [34, 86] }, "Inner": { "p1": [66, 78], "p2": [50, 78], "p3": [34, 78] } },
             "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
+        };
+
+        // 🎯 全新修正：精準對應官方圖表的 6格 起點座標配置！
+        // Wide: 2排x3格 / Narrow: 單排x6格 
+        const OPEN_START_COORDS = {
+            "Top": {
+                "Wide": [
+                    [34, 14], [50, 14], [66, 14], // 1, 2, 3 (外側)
+                    [34, 22], [50, 22], [66, 22]  // 4, 5, 6 (內側)
+                ],
+                "Narrow": [
+                    [30, 14], [38, 14], [46, 14], [54, 14], [62, 14], [70, 14] // 全在外側
+                ]
+            },
+            "Right": {
+                "Wide": [
+                    [86, 34], [86, 50], [86, 66], // 1, 2, 3 (外側)
+                    [78, 34], [78, 50], [78, 66]  // 4, 5, 6 (內側)
+                ],
+                "Narrow": [
+                    [86, 30], [86, 38], [86, 46], [86, 54], [86, 62], [86, 70] // 全在外側
+                ]
+            },
+            "Bottom": {
+                "Wide": [
+                    [34, 86], [50, 86], [66, 86], // 1, 2, 3 (外側)
+                    [34, 78], [50, 78], [66, 78]  // 4, 5, 6 (內側)
+                ],
+                "Narrow": [
+                    [30, 86], [38, 86], [46, 86], [54, 86], [62, 86], [70, 86] // 全在外側
+                ]
+            },
+            "Left": {
+                "Wide": [
+                    [14, 34], [14, 50], [14, 66], // 1, 2, 3 (外側)
+                    [22, 34], [22, 50], [22, 66]  // 4, 5, 6 (內側)
+                ],
+                "Narrow": [
+                    [14, 30], [14, 38], [14, 46], [14, 54], [14, 62], [14, 70] // 全在外側
+                ]
+            }
         };
 
         // 繪製行駛方向箭頭
@@ -292,52 +333,31 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
+        // 🎯 更新：完全依據官方 6格邏輯 繪製起點格
         function drawStartGrid(secId, activeZone, isWide) {
-            const offsets = [34, 50, 66]; 
-            const numZones = isWide ? 6 : 3;
-
-            for (let i = 0; i < numZones; i++) {
+            const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
+            for (let i = 0; i < 6; i++) {
                 const el = document.createElement('div');
                 el.className = `start-zone-marker ${i + 1 === activeZone ? 'start-zone-active' : ''}`;
                 el.innerHTML = (i + 1 === activeZone) ? '' : (i + 1);
                 
-                const isInner = i >= 3; 
-                const posIndex = i % 3; 
-                const offset = offsets[posIndex];
-                
-                let lanePos = isInner ? 22 : 14; 
-                if (secId === "Bottom" || secId === "Right") {
-                    lanePos = isInner ? 78 : 86;
-                }
-
-                if (secId === "Top") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-                if (secId === "Right") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
-                if (secId === "Bottom") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-                if (secId === "Left") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
+                const xy = coords[i];
+                el.style.left = `${xy[0]}%`;
+                el.style.top = `${xy[1]}%`;
                 
                 document.getElementById('overlays-layer').appendChild(el);
             }
         }
 
+        // 🎯 更新：完全依據官方 6格邏輯 放置車輛
         function drawStartCar(secId, zone, isWide) {
-            const offsets = [34, 50, 66];
+            const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
             const el = document.createElement('div');
             el.className = 'start-car'; el.innerHTML = "🚗";
             
-            const i = zone - 1;
-            const isInner = i >= 3;
-            const posIndex = i % 3;
-            const offset = offsets[posIndex];
-            
-            let lanePos = isInner ? 22 : 14; 
-            if (secId === "Bottom" || secId === "Right") {
-                lanePos = isInner ? 78 : 86;
-            }
-
-            if(secId === "Top") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-            if(secId === "Right") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
-            if(secId === "Bottom") { el.style.left = `${offset}%`; el.style.top = `${lanePos}%`; }
-            if(secId === "Left") { el.style.left = `${lanePos}%`; el.style.top = `${offset}%`; }
+            const xy = coords[zone - 1]; // zone 是 1~6
+            el.style.left = `${xy[0]}%`;
+            el.style.top = `${xy[1]}%`;
             
             document.getElementById('overlays-layer').appendChild(el);
         }
@@ -348,7 +368,6 @@
             const dirEng = Math.random() < 0.5 ? "Clockwise" : "Counter-Clockwise";
             const dirChn = dirEng === "Clockwise" ? "順時針 (↻)" : "逆時針 (↺)";
 
-            // 繪製中央大箭頭
             drawDirectionArrow(dirEng);
 
             if (currentMode === 'open') {
@@ -369,17 +388,14 @@
                     if (sec === s.id) {
                         startSectionIsWide = isWide;
                     }
-                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (Wide)</span>" : "<span style='color:#d90429'>窄 (Narrow) - 阻擋內道</span>"}</strong><br>`;
+                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (無阻擋)</span>" : "<span style='color:#d90429'>窄 (內側有牆)</span>"}</strong><br>`;
                     if (!isWide) drawNarrowWall(sec);
                 });
 
-                const maxZone = startSectionIsWide ? 6 : 3;
-                const startZone = Math.floor(Math.random() * maxZone) + 1;
+                // 🎯 修改：不管寬窄，起點永遠是抽 1~6
+                const startZone = Math.floor(Math.random() * 6) + 1;
                 
                 html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">第 ${startZone} 格</span><br>`;
-                if (!startSectionIsWide) {
-                    html += `<span style="color:#666; font-size: 14px;">(註：起點賽段為窄道，內側封閉，故只有 1~3 號格)</span><br>`;
-                }
                 
                 drawStartGrid(s.id, startZone, startSectionIsWide);
                 drawStartCar(s.id, startZone, startSectionIsWide);
