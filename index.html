@@ -68,8 +68,8 @@
             transform: translate(-50%, -50%);
             font-size: 200px;
             font-weight: bold;
-            color: rgba(217, 4, 41, 0.15); /* 半透明紅色 */
-            z-index: 5; /* 放在內牆之上，但不會擋住點擊 */
+            color: rgba(217, 4, 41, 0.15);
+            z-index: 5;
             pointer-events: none;
         }
 
@@ -124,7 +124,7 @@
             <button class="reset-btn" onclick="resetDraw()">🔄 重設畫面</button>
         </div>
         <div id="mode-hint" style="margin-top: 15px; font-size: 14px; color: #666;">
-            資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為 單排6格 (共6格)。
+            資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為剩下 4 格。
         </div>
     </div>
 
@@ -194,7 +194,7 @@
 
             if (mode === 'open') {
                 btn.innerHTML = '🎲 執行資格賽 (Open) 抽籤';
-                hint.innerHTML = '資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為 單排6格 (共6格)。';
+                hint.innerHTML = '資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為剩下 4 格。';
             } else {
                 btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
                 hint.innerHTML = '決賽模式：包含單一標誌 (必定在中間)、雙柱配置 (必定在前後)，以及停車場。';
@@ -210,7 +210,7 @@
             return { id: "Bottom", name: "下方區 (Bottom)" };
         };
 
-        const CARD_LAYOUTS = { /* ... 原本的 Obstacle 卡牌設定保持不變 ... */
+        const CARD_LAYOUTS = { 
             1: [["p2", "Green", "Inner"]], 2: [["p2", "Red", "Inner"]],
             3: [["p2", "Green", "Outer"]], 4: [["p2", "Red", "Outer"]],
             5: [["p3", "Green", "Inner"], ["p1", "Green", "Inner"]],
@@ -247,15 +247,14 @@
             36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
         };
 
-        const COORDS = { /* ... 決賽柱子座標維持不變 ... */
+        const COORDS = { 
             "Top": { "Outer": { "p1": [34, 14], "p2": [50, 14], "p3": [66, 14] }, "Inner": { "p1": [34, 22], "p2": [50, 22], "p3": [66, 22] } },
             "Right": { "Outer": { "p1": [86, 34], "p2": [86, 50], "p3": [86, 66] }, "Inner": { "p1": [78, 34], "p2": [78, 50], "p3": [78, 66] } },
             "Bottom": { "Outer": { "p1": [66, 86], "p2": [50, 86], "p3": [34, 86] }, "Inner": { "p1": [66, 78], "p2": [50, 78], "p3": [34, 78] } },
             "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
         };
 
-        // 🎯 全新修正：精準對應官方圖表的 6格 起點座標配置！
-        // Wide: 2排x3格 / Narrow: 單排x6格 
+        // 🎯 更新：將窄場地 (Narrow) 修改為 4格，寬場地維持 3x2 (6格)
         const OPEN_START_COORDS = {
             "Top": {
                 "Wide": [
@@ -263,7 +262,7 @@
                     [34, 22], [50, 22], [66, 22]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [30, 14], [38, 14], [46, 14], [54, 14], [62, 14], [70, 14] // 全在外側
+                    [38, 14], [46, 14], [54, 14], [62, 14] // 剩下 4格
                 ]
             },
             "Right": {
@@ -272,7 +271,7 @@
                     [78, 34], [78, 50], [78, 66]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [86, 30], [86, 38], [86, 46], [86, 54], [86, 62], [86, 70] // 全在外側
+                    [86, 38], [86, 46], [86, 54], [86, 62] // 剩下 4格
                 ]
             },
             "Bottom": {
@@ -281,7 +280,7 @@
                     [34, 78], [50, 78], [66, 78]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [30, 86], [38, 86], [46, 86], [54, 86], [62, 86], [70, 86] // 全在外側
+                    [38, 86], [46, 86], [54, 86], [62, 86] // 剩下 4格
                 ]
             },
             "Left": {
@@ -290,12 +289,11 @@
                     [22, 34], [22, 50], [22, 66]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [14, 30], [14, 38], [14, 46], [14, 54], [14, 62], [14, 70] // 全在外側
+                    [14, 38], [14, 46], [14, 54], [14, 62] // 剩下 4格
                 ]
             }
         };
 
-        // 繪製行駛方向箭頭
         function drawDirectionArrow(dirEng) {
             const arrowEl = document.createElement('div');
             arrowEl.className = 'direction-arrow';
@@ -333,10 +331,11 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 🎯 更新：完全依據官方 6格邏輯 繪製起點格
+        // 動態讀取該模式(寬/窄)到底有幾格，並繪製格子
         function drawStartGrid(secId, activeZone, isWide) {
             const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
-            for (let i = 0; i < 6; i++) {
+            const count = coords.length;
+            for (let i = 0; i < count; i++) {
                 const el = document.createElement('div');
                 el.className = `start-zone-marker ${i + 1 === activeZone ? 'start-zone-active' : ''}`;
                 el.innerHTML = (i + 1 === activeZone) ? '' : (i + 1);
@@ -349,13 +348,13 @@
             }
         }
 
-        // 🎯 更新：完全依據官方 6格邏輯 放置車輛
+        // 動態將車輛放置在抽中的格子
         function drawStartCar(secId, zone, isWide) {
             const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
             const el = document.createElement('div');
             el.className = 'start-car'; el.innerHTML = "🚗";
             
-            const xy = coords[zone - 1]; // zone 是 1~6
+            const xy = coords[zone - 1]; // zone 轉換為陣列索引
             el.style.left = `${xy[0]}%`;
             el.style.top = `${xy[1]}%`;
             
@@ -388,12 +387,13 @@
                     if (sec === s.id) {
                         startSectionIsWide = isWide;
                     }
-                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (無阻擋)</span>" : "<span style='color:#d90429'>窄 (內側有牆)</span>"}</strong><br>`;
+                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (無阻擋，6格)</span>" : "<span style='color:#d90429'>窄 (內側有牆，4格)</span>"}</strong><br>`;
                     if (!isWide) drawNarrowWall(sec);
                 });
 
-                // 🎯 修改：不管寬窄，起點永遠是抽 1~6
-                const startZone = Math.floor(Math.random() * 6) + 1;
+                // 🎯 判斷該區是寬還是窄，來決定最大亂數是 6 還是 4
+                const maxZones = startSectionIsWide ? 6 : 4;
+                const startZone = Math.floor(Math.random() * maxZones) + 1;
                 
                 html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">第 ${startZone} 格</span><br>`;
                 
