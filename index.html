@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2026 官方抽籤系統 (加入方向箭頭)</title>
+    <title>WRO 2026 官方抽籤系統 (精準網格修正版)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
         h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 20px;}
@@ -60,7 +60,7 @@
         
         /* ================= 視覺化元素 ================= */
         
-        /* 中央行駛方向箭頭 (浮水印效果) */
+        /* 中央行駛方向箭頭 */
         .direction-arrow {
             position: absolute;
             top: 50%;
@@ -79,11 +79,12 @@
         .pillar-green { background-color: #00a800; }
         .parking-zone { position: absolute; border: 3px dashed #F702F9; background-color: rgba(247, 2, 249, 0.25); z-index: 5; display: flex; align-items: center; justify-content: center; color: #F702F9; font-weight: bold; font-size: 20px; border-radius: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);}
 
-        /* 資格賽：牆體、起點格與車輛 */
+        /* 資格賽：牆體遮擋、起點格與車輛 */
         .wall-block {
-            position: absolute; z-index: 6; border: 2px solid #222; border-radius: 2px;
+            position: absolute; z-index: 6; border: 2px solid #222; border-radius: 4px;
             background: repeating-linear-gradient(45deg, #ffc107, #ffc107 10px, #333 10px, #333 20px);
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5); opacity: 0.9;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5); opacity: 0.95;
+            transform: translate(-50%, -50%);
         }
         
         /* 起點格 */
@@ -94,6 +95,7 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; font-weight: bold; color: #666;
         }
+        
         /* 被抽中的那格高亮 */
         .start-zone-active {
             border-color: #28a745; background-color: rgba(40, 167, 69, 0.3); color: #155724;
@@ -124,7 +126,7 @@
             <button class="reset-btn" onclick="resetDraw()">🔄 重設畫面</button>
         </div>
         <div id="mode-hint" style="margin-top: 15px; font-size: 14px; color: #666;">
-            資格賽模式：寬場地為 3×2 格 (共6格)，窄場地縮減為 2×2 格 (共4格)。
+            資格賽模式：寬場地為 6 格 (1~6)，窄場地會遮擋第 1、2 格，剩下 4 格 (3、4、5、6)。
         </div>
     </div>
 
@@ -194,7 +196,7 @@
 
             if (mode === 'open') {
                 btn.innerHTML = '🎲 執行資格賽 (Open) 抽籤';
-                hint.innerHTML = '資格賽模式：寬場地為 3×2 格 (共6格)，窄場地縮減為 2×2 格 (共4格)。';
+                hint.innerHTML = '資格賽模式：寬場地為 6 格 (1~6)，窄場地會遮擋第 1、2 格，剩下 4 格 (3、4、5、6)。';
             } else {
                 btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
                 hint.innerHTML = '決賽模式：包含單一標誌 (必定在中間)、雙柱配置 (必定在前後)，以及停車場。';
@@ -247,54 +249,36 @@
             36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
         };
 
-        const COORDS = { 
+        // 決賽專用座標
+        const OBSTACLE_COORDS = { 
             "Top": { "Outer": { "p1": [34, 14], "p2": [50, 14], "p3": [66, 14] }, "Inner": { "p1": [34, 22], "p2": [50, 22], "p3": [66, 22] } },
             "Right": { "Outer": { "p1": [86, 34], "p2": [86, 50], "p3": [86, 66] }, "Inner": { "p1": [78, 34], "p2": [78, 50], "p3": [78, 66] } },
             "Bottom": { "Outer": { "p1": [66, 86], "p2": [50, 86], "p3": [34, 86] }, "Inner": { "p1": [66, 78], "p2": [50, 78], "p3": [34, 78] } },
             "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
         };
 
-        // 🎯 全新修正：Wide=6格(3x2), Narrow=4格(2x2，座標已置中)
-        const OPEN_START_COORDS = {
+        // 🎯 全新精準修正：按照真實場地的 3x2 網格配置
+        // 每區固定有 1~6 的專屬位置，窄場地時遮蔽 1 和 2，僅顯示 3、4、5、6。
+        const OPEN_GRID_COORDS = {
             "Top": {
-                "Wide": [
-                    [34, 14], [50, 14], [66, 14], // 1, 2, 3 (外側)
-                    [34, 22], [50, 22], [66, 22]  // 4, 5, 6 (內側)
-                ],
-                "Narrow": [
-                    [42, 14], [58, 14], // 1, 2 (外側)
-                    [42, 22], [58, 22]  // 3, 4 (內側)
-                ]
+                1: [34, 14], 2: [34, 22],  // 第一排 (窄場地時會被牆壁擋住)
+                3: [50, 14], 4: [50, 22],  // 第二排
+                5: [66, 14], 6: [66, 22]   // 第三排
             },
             "Right": {
-                "Wide": [
-                    [86, 34], [86, 50], [86, 66], // 1, 2, 3 (外側)
-                    [78, 34], [78, 50], [78, 66]  // 4, 5, 6 (內側)
-                ],
-                "Narrow": [
-                    [86, 42], [86, 58], // 1, 2 (外側)
-                    [78, 42], [78, 58]  // 3, 4 (內側)
-                ]
+                1: [86, 34], 2: [78, 34],  // 第一排 (窄場地時會被牆壁擋住)
+                3: [86, 50], 4: [78, 50],  
+                5: [86, 66], 6: [78, 66]   
             },
             "Bottom": {
-                "Wide": [
-                    [34, 86], [50, 86], [66, 86], // 1, 2, 3 (外側)
-                    [34, 78], [50, 78], [66, 78]  // 4, 5, 6 (內側)
-                ],
-                "Narrow": [
-                    [42, 86], [58, 86], // 1, 2 (外側)
-                    [42, 78], [58, 78]  // 3, 4 (內側)
-                ]
+                1: [66, 86], 2: [66, 78],  // 第一排 (窄場地時會被牆壁擋住)
+                3: [50, 86], 4: [50, 78],  
+                5: [34, 86], 6: [34, 78]   
             },
             "Left": {
-                "Wide": [
-                    [14, 34], [14, 50], [14, 66], // 1, 2, 3 (外側)
-                    [22, 34], [22, 50], [22, 66]  // 4, 5, 6 (內側)
-                ],
-                "Narrow": [
-                    [14, 42], [14, 58], // 1, 2 (外側)
-                    [22, 42], [22, 58]  // 3, 4 (內側)
-                ]
+                1: [14, 66], 2: [22, 66],  // 第一排 (窄場地時會被牆壁擋住)
+                3: [14, 50], 4: [22, 50],  
+                5: [14, 34], 6: [22, 34]   
             }
         };
 
@@ -308,7 +292,7 @@
 
         function addPillar(secId, pos, color, row, hasParking) {
             const actualRow = hasParking ? "Inner" : row; 
-            const xy = COORDS[secId][actualRow][pos];
+            const xy = OBSTACLE_COORDS[secId][actualRow][pos];
             const el = document.createElement('div');
             el.className = `overlay ${color === "Red" ? 'pillar-red' : 'pillar-green'}`;
             el.style.left = `${xy[0]}%`;
@@ -326,38 +310,39 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
+        // 🎯 修正：精準蓋在第 1 和 第 2 格的位置上
         function drawNarrowWall(secId) {
             const el = document.createElement('div');
             el.className = 'wall-block';
-            if(secId === "Top") { el.style.left='26%'; el.style.top='18%'; el.style.width='48%'; el.style.height='8%'; }
-            if(secId === "Right") { el.style.left='74%'; el.style.top='26%'; el.style.width='8%'; el.style.height='48%'; }
-            if(secId === "Bottom") { el.style.left='26%'; el.style.top='74%'; el.style.width='48%'; el.style.height='8%'; }
-            if(secId === "Left") { el.style.left='18%'; el.style.top='26%'; el.style.width='8%'; el.style.height='48%'; }
+            if(secId === "Top") { el.style.left='34%'; el.style.top='18%'; el.style.width='12%'; el.style.height='14%'; }
+            if(secId === "Right") { el.style.left='82%'; el.style.top='34%'; el.style.width='14%'; el.style.height='12%'; }
+            if(secId === "Bottom") { el.style.left='66%'; el.style.top='82%'; el.style.width='12%'; el.style.height='14%'; }
+            if(secId === "Left") { el.style.left='18%'; el.style.top='66%'; el.style.width='14%'; el.style.height='12%'; }
             document.getElementById('overlays-layer').appendChild(el);
         }
 
+        // 🎯 修正：根據場地寬窄動態過濾要畫的格子
         function drawStartGrid(secId, activeZone, isWide) {
-            const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
-            const maxZones = isWide ? 6 : 4; // 動態決定格數上限
-            for (let i = 0; i < maxZones; i++) {
+            const validZones = isWide ? [1, 2, 3, 4, 5, 6] : [3, 4, 5, 6]; 
+            
+            validZones.forEach(zoneId => {
                 const el = document.createElement('div');
-                el.className = `start-zone-marker ${i + 1 === activeZone ? 'start-zone-active' : ''}`;
-                el.innerHTML = (i + 1 === activeZone) ? '' : (i + 1);
+                el.className = `start-zone-marker ${zoneId === activeZone ? 'start-zone-active' : ''}`;
+                el.innerHTML = (zoneId === activeZone) ? '' : zoneId;
                 
-                const xy = coords[i];
+                const xy = OPEN_GRID_COORDS[secId][zoneId];
                 el.style.left = `${xy[0]}%`;
                 el.style.top = `${xy[1]}%`;
                 
                 document.getElementById('overlays-layer').appendChild(el);
-            }
+            });
         }
 
-        function drawStartCar(secId, zone, isWide) {
-            const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
+        function drawStartCar(secId, zoneId) {
             const el = document.createElement('div');
             el.className = 'start-car'; el.innerHTML = "🚗";
             
-            const xy = coords[zone - 1];
+            const xy = OPEN_GRID_COORDS[secId][zoneId];
             el.style.left = `${xy[0]}%`;
             el.style.top = `${xy[1]}%`;
             
@@ -379,7 +364,7 @@
                 const s = getSectionInfo();
                 html += `<strong>2. 起始賽段：</strong> <span style="color:#007bff; font-weight:bold;">${s.name}</span><br>`;
 
-                html += `<br><strong>3. 賽道寬窄 (內圍牆設置)：</strong><br>`;
+                html += `<br><strong>3. 賽道寬窄 (障礙牆設置)：</strong><br>`;
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 const sectionNames = {"Top": "上方", "Right": "右側", "Bottom": "下方", "Left": "左側"};
                 
@@ -390,18 +375,19 @@
                     if (sec === s.id) {
                         startSectionIsWide = isWide;
                     }
-                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (無阻擋)</span>" : "<span style='color:#d90429'>窄 (內側有牆)</span>"}</strong><br>`;
+                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (無阻擋)</span>" : "<span style='color:#d90429'>窄 (遮擋 1、2)</span>"}</strong><br>`;
                     if (!isWide) drawNarrowWall(sec);
                 });
 
-                // 🎯 修改：依據賽道寬窄決定抽 1~6 或 1~4
-                const maxZones = startSectionIsWide ? 6 : 4;
-                const startZone = Math.floor(Math.random() * maxZones) + 1;
+                // 🎯 修正：限定抽籤池
+                const validZones = startSectionIsWide ? [1, 2, 3, 4, 5, 6] : [3, 4, 5, 6];
+                const randomIndex = Math.floor(Math.random() * validZones.length);
+                const startZone = validZones[randomIndex];
                 
                 html += `<br><strong>4. 起點位置：</strong> 位於 <span style="color:#F702F9; font-weight:bold;">第 ${startZone} 格</span><br>`;
                 
                 drawStartGrid(s.id, startZone, startSectionIsWide);
-                drawStartCar(s.id, startZone, startSectionIsWide);
+                drawStartCar(s.id, startZone);
 
             } else {
                 html += `<div class="section-title">🏁 決賽 (Obstacle) 抽籤結果</div>`;
