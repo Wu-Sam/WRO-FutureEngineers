@@ -124,7 +124,7 @@
             <button class="reset-btn" onclick="resetDraw()">🔄 重設畫面</button>
         </div>
         <div id="mode-hint" style="margin-top: 15px; font-size: 14px; color: #666;">
-            資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為剩下 4 格。
+            資格賽模式：寬場地為 3×2 格 (共6格)，窄場地縮減為 2×2 格 (共4格)。
         </div>
     </div>
 
@@ -194,7 +194,7 @@
 
             if (mode === 'open') {
                 btn.innerHTML = '🎲 執行資格賽 (Open) 抽籤';
-                hint.innerHTML = '資格賽模式：寬場地為 2排×3格 (共6格)，窄場地為剩下 4 格。';
+                hint.innerHTML = '資格賽模式：寬場地為 3×2 格 (共6格)，窄場地縮減為 2×2 格 (共4格)。';
             } else {
                 btn.innerHTML = '🎲 執行決賽 (Obstacle) 抽籤';
                 hint.innerHTML = '決賽模式：包含單一標誌 (必定在中間)、雙柱配置 (必定在前後)，以及停車場。';
@@ -254,7 +254,7 @@
             "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
         };
 
-        // 🎯 更新：將窄場地 (Narrow) 修改為 4格，寬場地維持 3x2 (6格)
+        // 🎯 全新修正：Wide=6格(3x2), Narrow=4格(2x2，座標已置中)
         const OPEN_START_COORDS = {
             "Top": {
                 "Wide": [
@@ -262,7 +262,8 @@
                     [34, 22], [50, 22], [66, 22]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [38, 14], [46, 14], [54, 14], [62, 14] // 剩下 4格
+                    [42, 14], [58, 14], // 1, 2 (外側)
+                    [42, 22], [58, 22]  // 3, 4 (內側)
                 ]
             },
             "Right": {
@@ -271,7 +272,8 @@
                     [78, 34], [78, 50], [78, 66]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [86, 38], [86, 46], [86, 54], [86, 62] // 剩下 4格
+                    [86, 42], [86, 58], // 1, 2 (外側)
+                    [78, 42], [78, 58]  // 3, 4 (內側)
                 ]
             },
             "Bottom": {
@@ -280,7 +282,8 @@
                     [34, 78], [50, 78], [66, 78]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [38, 86], [46, 86], [54, 86], [62, 86] // 剩下 4格
+                    [42, 86], [58, 86], // 1, 2 (外側)
+                    [42, 78], [58, 78]  // 3, 4 (內側)
                 ]
             },
             "Left": {
@@ -289,11 +292,13 @@
                     [22, 34], [22, 50], [22, 66]  // 4, 5, 6 (內側)
                 ],
                 "Narrow": [
-                    [14, 38], [14, 46], [14, 54], [14, 62] // 剩下 4格
+                    [14, 42], [14, 58], // 1, 2 (外側)
+                    [22, 42], [22, 58]  // 3, 4 (內側)
                 ]
             }
         };
 
+        // 繪製行駛方向箭頭
         function drawDirectionArrow(dirEng) {
             const arrowEl = document.createElement('div');
             arrowEl.className = 'direction-arrow';
@@ -331,11 +336,10 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 動態讀取該模式(寬/窄)到底有幾格，並繪製格子
         function drawStartGrid(secId, activeZone, isWide) {
             const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
-            const count = coords.length;
-            for (let i = 0; i < count; i++) {
+            const maxZones = isWide ? 6 : 4; // 動態決定格數上限
+            for (let i = 0; i < maxZones; i++) {
                 const el = document.createElement('div');
                 el.className = `start-zone-marker ${i + 1 === activeZone ? 'start-zone-active' : ''}`;
                 el.innerHTML = (i + 1 === activeZone) ? '' : (i + 1);
@@ -348,13 +352,12 @@
             }
         }
 
-        // 動態將車輛放置在抽中的格子
         function drawStartCar(secId, zone, isWide) {
             const coords = OPEN_START_COORDS[secId][isWide ? "Wide" : "Narrow"];
             const el = document.createElement('div');
             el.className = 'start-car'; el.innerHTML = "🚗";
             
-            const xy = coords[zone - 1]; // zone 轉換為陣列索引
+            const xy = coords[zone - 1];
             el.style.left = `${xy[0]}%`;
             el.style.top = `${xy[1]}%`;
             
@@ -387,11 +390,11 @@
                     if (sec === s.id) {
                         startSectionIsWide = isWide;
                     }
-                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (無阻擋，6格)</span>" : "<span style='color:#d90429'>窄 (內側有牆，4格)</span>"}</strong><br>`;
+                    html += `&nbsp;&nbsp;➔ ${sectionNames[sec]}區：<strong>${isWide ? "<span style='color:#28a745'>寬 (無阻擋)</span>" : "<span style='color:#d90429'>窄 (內側有牆)</span>"}</strong><br>`;
                     if (!isWide) drawNarrowWall(sec);
                 });
 
-                // 🎯 判斷該區是寬還是窄，來決定最大亂數是 6 還是 4
+                // 🎯 修改：依據賽道寬窄決定抽 1~6 或 1~4
                 const maxZones = startSectionIsWide ? 6 : 4;
                 const startZone = Math.floor(Math.random() * maxZones) + 1;
                 
