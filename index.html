@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2026 官方抽籤系統 (加牆修正版)</title>
+    <title>WRO 2026 官方抽籤系統 (加牆無字放大版)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
         h1 { color: #0056b3; font-size: 26px; text-align: center; margin-top: 20px;}
@@ -53,31 +53,28 @@
 
         /* ================= 資格賽：加牆延伸與起點格 ================= */
         
-        /* 窄場地：向外延伸的實體牆面 (覆蓋 1、2) */
+        /* 窄場地：向外延伸的實體牆面，與內牆同色 */
         .narrow-wall-extension {
             position: absolute; z-index: 6;
-            background-color: #cbd5e1; /* 實體牆壁的質感顏色 */
-            border: 2px solid #64748b;
-            box-shadow: inset 0 0 8px rgba(0,0,0,0.1);
-            display: flex; align-items: center; justify-content: center;
-            color: #64748b; font-weight: bold; font-size: 14px; letter-spacing: 2px;
+            background-color: #f0f2f5; /* 與內牆同色 */
+            box-shadow: 0 0 0 2px #ddd; /* 模擬相同的灰色邊框 */
         }
         
-        /* 起點格 */
+        /* 起點格 (放大) */
         .start-zone-marker {
             position: absolute; transform: translate(-50%, -50%); z-index: 4;
             border: 2px dashed #999; background-color: rgba(255, 255, 255, 0.8);
-            width: 4.5%; aspect-ratio: 1 / 1; border-radius: 4px; /* 稍微縮小格子避免視覺擁擠 */
+            width: 7%; aspect-ratio: 1 / 1; border-radius: 4px; /* 從 4.5% 放大到 7% */
             display: flex; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: bold; color: #666;
+            font-size: 16px; font-weight: bold; color: #666;
         }
         .start-zone-active { border-color: #28a745; background-color: rgba(40, 167, 69, 0.3); color: #155724; z-index: 5; }
 
         .start-car {
             position: absolute; transform: translate(-50%, -50%); z-index: 15;
             background-color: #ffc107; border: 2px solid #333; border-radius: 5px;
-            width: 5%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
-            font-size: 18px; box-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+            width: 7%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; /* 與起點格等大 */
+            font-size: 24px; box-shadow: 2px 2px 6px rgba(0,0,0,0.7); /* 車子圖示放大 */
         }
 
         /* 決賽：柱子與停車場 */
@@ -190,31 +187,24 @@
             33: [["p3", "Red", "Outer"], ["p1", "Green", "Inner"]], 34: [["p3", "Red", "Outer"], ["p1", "Red", "Inner"]],
             35: [["p3", "Red", "Outer"], ["p1", "Green", "Outer"]], 36: [["p3", "Red", "Outer"], ["p1", "Red", "Outer"]]
         };
-        const OBSTACLE_COORDS = { 
-            "Top": { "Outer": { "p1": [34, 14], "p2": [50, 14], "p3": [66, 14] }, "Inner": { "p1": [34, 22], "p2": [50, 22], "p3": [66, 22] } },
-            "Right": { "Outer": { "p1": [86, 34], "p2": [86, 50], "p3": [86, 66] }, "Inner": { "p1": [78, 34], "p2": [78, 50], "p3": [78, 66] } },
-            "Bottom": { "Outer": { "p1": [66, 86], "p2": [50, 86], "p3": [34, 86] }, "Inner": { "p1": [66, 78], "p2": [50, 78], "p3": [34, 78] } },
-            "Left": { "Outer": { "p1": [14, 66], "p2": [14, 50], "p3": [14, 34] }, "Inner": { "p1": [22, 66], "p2": [22, 50], "p3": [22, 34] } }
-        };
 
-        // 🎯 重新校正：1、2 始終在「最內側」，5、6 在「最外側」
         const OPEN_GRID_COORDS = {
-            "Top": { // 1,2為Inner(靠下); 5,6為Outer(靠上)
+            "Top": {
                 1: [34, 23], 2: [66, 23],
                 3: [34, 18], 4: [66, 18],
                 5: [34, 13], 6: [66, 13]
             },
-            "Right": { // 1,2為Inner(靠左); 5,6為Outer(靠右)
+            "Right": {
                 1: [77, 34], 2: [77, 66],
                 3: [82, 34], 4: [82, 66],
                 5: [87, 34], 6: [87, 66]
             },
-            "Bottom": { // 1,2為Inner(靠上); 5,6為Outer(靠下)
+            "Bottom": {
                 1: [66, 77], 2: [34, 77],
                 3: [66, 82], 4: [34, 82],
                 5: [66, 87], 6: [34, 87]
             },
-            "Left": { // 1,2為Inner(靠右); 5,6為Outer(靠左)
+            "Left": {
                 1: [23, 34], 2: [23, 66],
                 3: [18, 34], 4: [18, 66],
                 5: [13, 34], 6: [13, 66]
@@ -227,15 +217,14 @@
             document.getElementById('overlays-layer').appendChild(arrowEl);
         }
 
-        // 🎯 新增：窄場地「加牆」實體延伸，直接填滿 Inner 空間，蓋掉 1、2 號格
         function drawNarrowWallExtension(secId) {
             const el = document.createElement('div');
             el.className = 'narrow-wall-extension';
-            el.innerHTML = "WALL";
-            if(secId === "Top") { el.style.left='26%'; el.style.top='20%'; el.style.width='48%'; el.style.height='6%'; borderRight='none'; borderLeft='none';}
-            if(secId === "Right") { el.style.left='74%'; el.style.top='26%'; el.style.width='6%'; el.style.height='48%'; borderTop='none'; borderBottom='none';}
-            if(secId === "Bottom") { el.style.left='26%'; el.style.top='74%'; el.style.width='48%'; el.style.height='6%'; borderRight='none'; borderLeft='none';}
-            if(secId === "Left") { el.style.left='20%'; el.style.top='26%'; el.style.width='6%'; el.style.height='48%'; borderTop='none'; borderBottom='none';}
+            // 拿掉 WALL 文字，改用原本內牆顏色和陰影邊框
+            if(secId === "Top") { el.style.left='26%'; el.style.top='20%'; el.style.width='48%'; el.style.height='6%'; }
+            if(secId === "Right") { el.style.left='74%'; el.style.top='26%'; el.style.width='6%'; el.style.height='48%'; }
+            if(secId === "Bottom") { el.style.left='26%'; el.style.top='74%'; el.style.width='48%'; el.style.height='6%'; }
+            if(secId === "Left") { el.style.left='20%'; el.style.top='26%'; el.style.width='6%'; el.style.height='48%'; }
             document.getElementById('overlays-layer').appendChild(el);
         }
 
@@ -294,7 +283,6 @@
                 drawStartCar(s.id, startZone);
 
             } else {
-                // (決賽抽籤邏輯同前版，為節省空間此處略，使用時完整保留)
                 html += `<div class="section-title">🚧 決賽 (Obstacle) 開發中</div>`; 
             }
             document.getElementById('result-info').innerHTML = html;
