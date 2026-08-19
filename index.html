@@ -3,171 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WRO 2026 官方抽籤系統 | Future Engineers (完整場地歷史紀錄版)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>WRO 2026 官方抽籤系統 | Future Engineers (高質感科技版)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --primary-color: #0f4c81;
             --accent-blue: #0056b3;
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --panel-bg: rgba(255, 255, 255, 0.95);
-            --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.9);
+            --shadow-soft: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
+        /* 頂級動態漸層科技感背景 */
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
-            background: var(--bg-gradient); 
-            color: #333; margin: 0; padding: 30px 20px; 
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            background-size: 300% 300%;
+            animation: gradientBG 15s ease infinite;
+            color: #2c3e50; margin: 0; padding: 35px 20px; 
             min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         h1 { 
-            color: var(--primary-color); font-size: 32px; font-weight: 900;
+            color: #ffffff; font-size: 34px; font-weight: 900;
             text-align: center; margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
         }
         
         #realtime-clock {
-            position: fixed; top: 20px; left: 20px; font-size: 15px; font-weight: 700;
-            color: var(--primary-color); background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px); padding: 10px 20px;
-            border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); z-index: 1000;
+            position: fixed; top: 20px; left: 20px; font-size: 14px; font-weight: 700;
+            color: #fff; background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 10px 20px; border-radius: 50px; 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); z-index: 1000;
         }
 
-        /* 側邊欄按鈕 */
+        /* 側邊欄按鈕：高質感發光懸浮 */
         .toggle-sidebar-btn {
             position: fixed; top: 20px; right: 20px;
-            background: linear-gradient(135deg, #2196F3, #0b7dda);
-            color: white; padding: 10px 20px; border-radius: 50px;
-            border: none; font-size: 15px; font-weight: 700; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 1000;
-            transition: all 0.3s;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: white; padding: 11px 22px; border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 114, 255, 0.4); z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        .toggle-sidebar-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(33,150,243,0.3); }
+        .toggle-sidebar-btn:hover { 
+            transform: translateY(-3px) scale(1.05); 
+            box-shadow: 0 12px 30px rgba(0, 114, 255, 0.6); 
+        }
 
-        /* 側邊欄 */
+        /* 側邊欄：毛玻璃風格 */
         .sidebar {
             position: fixed; top: 0; right: -420px; width: 380px; height: 100vh;
-            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
-            box-shadow: -5px 0 25px rgba(0,0,0,0.15); transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: -10px 0 40px rgba(0,0,0,0.2); 
+            transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             z-index: 1001; padding: 25px; box-sizing: border-box; overflow-y: auto;
+            border-left: 1px solid rgba(255, 255, 255, 0.6);
         }
         .sidebar.active { right: 0; }
 
         .sidebar-header {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;
+            border-bottom: 2px solid rgba(0,0,0,0.06); padding-bottom: 15px; margin-bottom: 20px;
         }
-        .sidebar-header h2 { margin: 0; color: var(--primary-color); font-size: 20px; }
+        .sidebar-header h2 { margin: 0; color: var(--primary-color); font-size: 20px; font-weight: 900; }
 
-        .close-btn { background: transparent; color: #999; font-size: 28px; border: none; cursor: pointer; padding: 0; line-height: 1; }
-        .close-btn:hover { color: #333; }
+        .close-btn { background: transparent; color: #777; font-size: 28px; border: none; cursor: pointer; padding: 0; line-height: 1; transition: color 0.2s; }
+        .close-btn:hover { color: #111; }
 
-        /* 歷史紀錄卡片 */
+        /* 歷史紀錄卡片優化 */
         .history-item {
-            background: #fff; border-left: 5px solid #2196F3; padding: 15px;
-            margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            font-size: 13px; line-height: 1.6;
+            background: rgba(255, 255, 255, 0.8); border-left: 5px solid #0072ff; padding: 16px;
+            margin-bottom: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            font-size: 13px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.8);
+            transition: transform 0.2s;
         }
-        .history-item.fail { border-left-color: #f44336; }
-        .history-item.success { border-left-color: #4CAF50; }
+        .history-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .history-item.fail { border-left-color: #ff4757; }
+        .history-item.success { border-left-color: #2ed573; }
 
-        .history-title { font-size: 15px; font-weight: bold; margin-bottom: 5px; color: var(--primary-color); }
-        .history-time { font-size: 11px; color: #888; margin-bottom: 8px; }
-        .history-content { background: #f9f9f9; padding: 8px; border-radius: 4px; margin-bottom: 10px; }
+        .history-title { font-size: 15px; font-weight: 900; margin-bottom: 5px; color: var(--primary-color); }
+        .history-time { font-size: 11px; color: #777; margin-bottom: 8px; font-weight: 500; }
+        .history-content { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-bottom: 10px; }
         
         .history-actions { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
-        .history-actions div { display: flex; gap: 5px; }
-        .history-actions button { padding: 4px 8px; font-size: 11px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-restore { background: #e3f2fd; color: #1565c0; }
-        .btn-restore:hover { background: #bbdefb; }
+        .history-actions div { display: flex; gap: 6px; }
+        .history-actions button { padding: 6px 10px; font-size: 11px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+        .btn-restore { background: #e1f5fe; color: #0288d1; }
+        .btn-restore:hover { background: #b3e5fc; transform: scale(1.05); }
         .btn-mark-success { background: #e8f5e9; color: #2e7d32; }
+        .btn-mark-success:hover { background: #c8e6c9; }
         .btn-mark-fail { background: #ffebee; color: #c62828; }
+        .btn-mark-fail:hover { background: #ffcdd2; }
 
-        /* 互動提示文字樣式 */
+        /* 互動提示文字 */
         .interactive-text {
-            display: inline-block;
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(33, 150, 243, 0.1);
-            color: #0d47a1;
-            font-weight: bold;
-            transition: all 0.2s;
-            border: 1px dashed #2196F3;
-            margin: 1px 0;
+            display: inline-block; cursor: pointer; padding: 3px 8px; border-radius: 6px;
+            background: rgba(0, 114, 255, 0.1); color: #0056b3; font-weight: 700;
+            transition: all 0.2s; border: 1px dashed rgba(0, 114, 255, 0.4); margin: 2px 0;
         }
-        .interactive-text:hover {
-            background: rgba(33, 150, 243, 0.25);
-            transform: scale(1.03);
-        }
+        .interactive-text:hover { background: rgba(0, 114, 255, 0.2); transform: scale(1.04); }
 
-        /* 模式切換 */
+        /* 模式切換按鈕 */
         .tab-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
         .tab-btn { 
-            font-family: 'Noto Sans TC', sans-serif; font-size: 18px; 
-            padding: 12px 35px; border-radius: 50px; background-color: white; 
-            color: #666; font-weight: 700; cursor: pointer; 
-            transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none;
+            font-family: 'Noto Sans TC', sans-serif; font-size: 17px; 
+            padding: 12px 32px; border-radius: 50px; background: rgba(255, 255, 255, 0.2); 
+            backdrop-filter: blur(10px); color: #fff; font-weight: 700; cursor: pointer; 
+            transition: all 0.3s; box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        .tab-btn:hover { color: var(--accent-blue); transform: translateY(-2px); }
+        .tab-btn:hover { background: rgba(255, 255, 255, 0.35); transform: translateY(-2px); }
         .tab-btn.active { 
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
-            color: #fff; box-shadow: 0 8px 20px rgba(30, 60, 114, 0.4); 
+            background: #ffffff; color: var(--primary-color); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); 
+            border-color: #fff;
         }
 
-        /* 控制區 */
+        /* 控制面板：玻璃擬態 */
         .controls { 
             text-align: center; margin-bottom: 30px; padding: 25px; 
-            background: var(--panel-bg); border-radius: 16px; 
-            box-shadow: var(--shadow-soft); max-width: 800px; margin: 0 auto;
+            background: var(--panel-bg); backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px; border: 1px solid var(--panel-border);
+            box-shadow: var(--shadow-soft); max-width: 800px; margin: 0 auto 30px auto;
         }
         .btn-group { display: flex; justify-content: center; gap: 20px; } 
         button.draw-btn { 
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); 
-            color: white; font-weight: 700; font-size: 18px; 
-            padding: 14px 30px; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s;
+            color: white; font-weight: 700; font-size: 17px; 
+            padding: 14px 32px; border: none; border-radius: 12px; cursor: pointer; 
+            box-shadow: 0 8px 25px rgba(17, 153, 142, 0.4); transition: all 0.3s;
         }
-        button.draw-btn:hover { transform: translateY(-3px) scale(1.02); }
-        button.reset-btn { 
-            background: linear-gradient(135deg, #ff5e62 0%, #ff9966 100%); 
-            color: white; font-weight: 700; font-size: 18px; 
-            padding: 14px 30px; border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s;
-        }
-        button.reset-btn:hover { transform: translateY(-3px) scale(1.02); }
+        button.draw-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 30px rgba(17, 153, 142, 0.6); }
         
-        #mode-hint { margin-top: 15px; font-size: 15px; color: #555; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; display: inline-block;}
+        button.reset-btn { 
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); 
+            color: white; font-weight: 700; font-size: 17px; 
+            padding: 14px 32px; border: none; border-radius: 12px; cursor: pointer; 
+            box-shadow: 0 8px 25px rgba(255, 65, 108, 0.4); transition: all 0.3s;
+        }
+        button.reset-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 30px rgba(255, 65, 108, 0.6); }
+        
+        #mode-hint { margin-top: 15px; font-size: 14px; color: #444; background: rgba(255,255,255,0.6); padding: 10px 15px; border-radius: 8px; display: inline-block; font-weight: 500;}
 
-        /* 主內容區 */
+        /* 主內容區容器 */
         .main-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; max-width: 1300px; margin: 0 auto;}
         
+        /* 資訊面板 */
         .info-panel { 
             flex: 1; min-width: 340px; max-width: 420px; 
-            background: var(--panel-bg); padding: 30px; 
-            border-radius: 16px; line-height: 2.2; 
-            box-shadow: var(--shadow-soft); border-top: 6px solid var(--primary-color); 
-            font-size: 16px; 
+            background: var(--panel-bg); backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 30px; border-radius: 20px; line-height: 2.2; 
+            box-shadow: var(--shadow-soft); border: 1px solid var(--panel-border);
+            border-top: 6px solid var(--primary-color); font-size: 16px; 
         }
         .section-title { 
             font-weight: 900; color: var(--primary-color); 
-            margin-top: 0; margin-bottom: 20px; font-size: 22px; 
-            border-bottom: 2px dashed #ccc; padding-bottom: 12px; 
+            margin-top: 0; margin-bottom: 20px; font-size: 21px; 
+            border-bottom: 2px dashed rgba(0,0,0,0.1); padding-bottom: 12px; 
         }
         
+        /* 地圖面板 */
         .map-panel { 
             flex: 2; min-width: 500px; max-width: 800px; 
-            background: var(--panel-bg); padding: 25px; 
-            border-radius: 16px; box-shadow: var(--shadow-soft); 
-            display: flex; justify-content: center; align-items: center; 
+            background: var(--panel-bg); backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 25px; border-radius: 20px; border: 1px solid var(--panel-border);
+            box-shadow: var(--shadow-soft); display: flex; justify-content: center; align-items: center; 
         }
         
         /* 賽道底板 */
         .map-container { 
             position: relative; width: 100%; max-width: 700px; aspect-ratio: 1 / 1; 
-            background-color: #fafafa; 
-            background-image: linear-gradient(#e5e5e5 1px, transparent 1px), linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
-            background-size: 20px 20px; overflow: hidden; border-radius: 12px; border: 2px solid #ddd;
+            background-color: #ffffff; 
+            background-image: radial-gradient(#d1d8e0 1px, transparent 1px);
+            background-size: 25px 25px; overflow: hidden; border-radius: 16px; 
+            border: 3px solid rgba(255,255,255,0.8);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
         }
         
         .track-wall { position: absolute; box-sizing: border-box; }
@@ -175,17 +202,19 @@
             top: 10%; bottom: 10%; left: 10%; right: 10%; 
             border: 8px solid #2b2b2b; border-radius: 12%; 
             background-color: #3b3b3b; z-index: 1; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         .center-line { 
             top: 18%; bottom: 18%; left: 18%; right: 18%; 
-            border: 3px dashed rgba(255, 255, 255, 0.6); border-radius: 8%; z-index: 2; 
+            border: 3px dashed rgba(255, 255, 255, 0.65); border-radius: 8%; z-index: 2; 
         }
         .inner-wall { 
             top: 26%; bottom: 26%; left: 26%; right: 26%; 
             border: 8px solid #2b2b2b; border-radius: 4%; 
-            background-color: #fafafa; 
-            background-image: linear-gradient(#e5e5e5 1px, transparent 1px), linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
-            background-size: 20px 20px; z-index: 4; 
+            background-color: #ffffff; 
+            background-image: radial-gradient(#d1d8e0 1px, transparent 1px);
+            background-size: 25px 25px; z-index: 4; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .boundary-line { position: absolute; z-index: 3;}
@@ -195,7 +224,8 @@
         /* 視覺化元素 */
         .overlay { 
             position: absolute; transform: translate(-50%, -50%); 
-            width: 4%; aspect-ratio: 1 / 1; border-radius: 50%; z-index: 10; border: 2px solid #fff; 
+            width: 4%; aspect-ratio: 1 / 1; border-radius: 50%; z-index: 10; 
+            border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         .pillar-red { background: radial-gradient(circle at 30% 30%, #ff4b4b, #cc0000); }
         .pillar-green { background: radial-gradient(circle at 30% 30%, #32cd32, #008000); }
@@ -203,13 +233,13 @@
         /* 停車場 */
         .parking-zone { 
             position: absolute; border: 3px dashed #F702F9; 
-            background-color: rgba(247, 2, 249, 0.15); z-index: 5; 
+            background-color: rgba(247, 2, 249, 0.12); z-index: 5; 
             display: flex; align-items: center; justify-content: center; 
-            border-radius: 6px; box-shadow: inset 0 0 10px rgba(247, 2, 249, 0.2);
+            border-radius: 8px; box-shadow: inset 0 0 15px rgba(247, 2, 249, 0.2);
         }
         .car-in-parking {
             font-size: 34px; animation: float-car 1.5s infinite alternate ease-in-out;
-            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
         @keyframes float-car {
             from { transform: translateY(-2px); }
@@ -218,23 +248,24 @@
 
         .start-zone-marker {
             position: absolute; transform: translate(-50%, -50%); z-index: 4;
-            border: 2px dashed #999; background-color: rgba(255, 255, 255, 0.6);
-            width: 7%; aspect-ratio: 1 / 1; border-radius: 4px;
+            border: 2px dashed #aaa; background-color: rgba(255, 255, 255, 0.75);
+            width: 7%; aspect-ratio: 1 / 1; border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 16px; font-weight: bold; color: #888;
+            font-size: 15px; font-weight: 700; color: #666;
         }
         .start-zone-active { 
-            border: 3px solid #ff3300; background-color: rgba(255, 51, 0, 0.2); 
-            z-index: 5; box-shadow: 0 0 15px rgba(255, 51, 0, 0.6);
+            border: 3px solid #ff3300; background-color: rgba(255, 51, 0, 0.25); 
+            z-index: 5; box-shadow: 0 0 20px rgba(255, 51, 0, 0.6);
             transform: translate(-50%, -50%) scale(1.1);
         }
         .wall-block {
-            position: absolute; z-index: 6; border: 2px solid #111; border-radius: 3px;
+            position: absolute; z-index: 6; border: 2px solid #111; border-radius: 4px;
             background: repeating-linear-gradient(45deg, #ffcc00, #ffcc00 12px, #222 12px, #222 24px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         .open-car {
             position: absolute; transform: translate(-50%, -50%); z-index: 15;
-            font-size: 36px; filter: drop-shadow(2px 5px 8px rgba(0,0,0,0.5));
+            font-size: 36px; filter: drop-shadow(2px 6px 10px rgba(0,0,0,0.4));
             animation: bounce-drop 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
         @keyframes bounce-drop {
@@ -246,12 +277,12 @@
         .highlight-ripple {
             position: absolute; transform: translate(-50%, -50%);
             width: 50px; height: 50px; border-radius: 50%;
-            border: 3px solid #ffeb3b; background: rgba(255, 235, 59, 0.4);
+            border: 3px solid #ffe600; background: rgba(255, 230, 0, 0.45);
             z-index: 25; animation: ripple-effect 0.8s ease-out forwards;
         }
         @keyframes ripple-effect {
             0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
         }
     </style>
 </head>
@@ -267,7 +298,7 @@
             <button class="close-btn" onclick="toggleSidebar()">&times;</button>
         </div>
         <div id="historyList">
-            <div style="text-align: center; color: #888; margin-top: 40px; font-size: 14px;">目前尚無抽籤紀錄，請點擊畫面上的按鈕開始抽籤！</div>
+            <div style="text-align: center; color: #777; margin-top: 40px; font-size: 14px;">目前尚無抽籤紀錄，請點擊畫面上的按鈕開始抽籤！</div>
         </div>
     </div>
 
@@ -288,7 +319,7 @@
 
     <div class="main-container">
         <div class="info-panel" id="result-info">
-            <div style="text-align: center; color: #888; font-size: 18px; margin-top: 50px;">👆 請點擊上方綠色按鈕進行抽籤...</div>
+            <div style="text-align: center; color: #777; font-size: 18px; margin-top: 50px;">👆 請點擊上方綠色按鈕進行抽籤...</div>
         </div>
 
         <div class="map-panel">
@@ -331,7 +362,7 @@
 
         function resetDraw() {
             document.getElementById('overlays-layer').innerHTML = ''; 
-            document.getElementById('result-info').innerHTML = '<div style="text-align: center; color: #888; font-size: 18px; margin-top: 50px;">👆 請點擊上方綠色按鈕進行抽籤...</div>';
+            document.getElementById('result-info').innerHTML = '<div style="text-align: center; color: #777; font-size: 18px; margin-top: 50px;">👆 請點擊上方綠色按鈕進行抽籤...</div>';
         }
 
         function switchMode(mode) {
@@ -466,7 +497,6 @@
             return { left: xy[0], top: xy[1] };
         }
 
-        // 核心：完整場地重建函數（點擊歷史紀錄的「還原場地」時觸發）
         function restoreField(fullData) {
             resetDraw();
             const info = document.getElementById('result-info');
@@ -477,16 +507,18 @@
                 const startSec = fullData.startSec;
                 const zoneId = fullData.zoneId;
                 const isInner = !isWide;
-                let wallBlockSecs = ["Top", "Right", "Bottom", "Left"].filter(id => id !== startSec.id);
+                let wallBlockSecs = ["Top", "Right", "Bottom", "Left"].filter(id => id !== startSec);
                 
                 wallBlockSecs.forEach(secId => drawWallBlock(secId, isInner ? "Inner" : "Outer"));
                 drawStartGrid(startSec, zoneId, isWide);
                 drawStartCar(startSec, zoneId);
 
+                const secNameMap = { "Top": "上方區 (Top)", "Right": "右側區 (Right)", "Bottom": "下方區 (Bottom)", "Left": "左側區 (Left)" };
+
                 info.innerHTML = `
                     <h2 class="section-title">🏁 資格賽 (Open) 還原結果</h2>
                     <strong>1. 賽道牆體設置：</strong> ${isWide ? "寬 (Wide)" : "窄 (Narrow)"}<br>
-                    <strong>2. 起點區域：</strong> ${startSec}<br>
+                    <strong>2. 起點區域：</strong> ${secNameMap[startSec]}<br>
                     <strong>3. 起點車輛位置：</strong> 位置 ${zoneId} 🚗
                 `;
             } else {
@@ -497,11 +529,8 @@
                 const doubleObjs = fullData.doubleObjs;
 
                 drawParking(pSec, true);
-
-                // 單一標誌
-                const sCoord = addPillar(sSec.id, singleObj.pos, singleObj.color, singleObj.lane, (sSec.id === pSec));
+                addPillar(sSec.id, singleObj.pos, singleObj.color, singleObj.lane, (sSec.id === pSec));
                 
-                // 雙標誌
                 doubleObjs.forEach(item => {
                     const hasP = (item.sec === pSec);
                     addPillar(item.sec, item.c1[0], item.c1[1], item.c1[2], hasP);
@@ -530,7 +559,6 @@
             const itemDiv = document.createElement('div');
             itemDiv.className = 'history-item';
             
-            // 將 rawData 轉成字串安全嵌入 onclick
             const jsonStr = encodeURIComponent(JSON.stringify(rawData));
 
             itemDiv.innerHTML = `
@@ -574,7 +602,7 @@
 
                 html += `<strong>1. 賽道牆體設置：</strong> <span class="interactive-text" onclick="triggerHighlightAt(50, 22)">${isWide ? "寬 (Wide)" : "窄 (Narrow)"}</span><br>`;
                 html += `<strong>2. 起點區域：</strong> <span class="interactive-text" onclick="triggerHighlightAt(${carXY.left}, ${carXY.top})">${startSec.name}</span><br>`;
-                html += `<strong>3. 起點車輛位置：</strong> ➔ <span class="interactive-text" style="color:#ff3300; background:#fff0eb;" onclick="triggerHighlightAt(${carXY.left}, ${carXY.top})">位置 ${zoneId} 🚗</span><br>`;
+                html += `<strong>3. 起點車輛位置：</strong> ➔ <span class="interactive-text" style="color:#ff3300; background:rgba(255,51,0,0.12);" onclick="triggerHighlightAt(${carXY.left}, ${carXY.top})">位置 ${zoneId} 🚗</span><br>`;
 
                 const summaryHtml = `牆體: ${isWide ? "寬" : "窄"}<br>起點區: ${startSec.name}<br>起點格: 位置 ${zoneId}`;
                 const rawData = { type: 'open', isWide, startSec: startSec.id, zoneId };
@@ -588,7 +616,7 @@
                 const parkingXY = drawParking(config.parking_section, true);
 
                 html += `<strong>1. 行進方向：</strong> <span class="interactive-text">順時針 (固定)</span><br>`;
-                html += `<strong>2. 停車場與起點：</strong> <span class="interactive-text" style="color:#F702F9; background:rgba(247,2,249,0.1);" onclick="triggerHighlightAt(${parkingXY.left}, ${parkingXY.top})">${p.name} 🚗</span><br>`;
+                html += `<strong>2. 停車場與起點：</strong> <span class="interactive-text" style="color:#F702F9; background:rgba(247,2,249,0.12);" onclick="triggerHighlightAt(${parkingXY.left}, ${parkingXY.top})">${p.name} 🚗</span><br>`;
                 html += `<strong>3. 單一標誌區：</strong> <span class="interactive-text" onclick="triggerHighlightAt(50, 50)">${s.name}</span><br><br>`;
                 
                 const singlePositions = ["p1", "p2", "p3"];
