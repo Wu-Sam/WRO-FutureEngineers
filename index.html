@@ -427,35 +427,13 @@
         }
 
         function drawWallBlock(secId, row) {
-            const el = document.createElement('div'); 
-            el.className = 'wall-block';
-
-            // 強制將牆體位置設定在靠近中心的內圈位置
-            // 內圈的邊界約在 26% 和 74% 之間
-            const centerPos = 26; // 靠近內側牆壁的座標
-            
-            if (secId === "Top") {
-                el.style.top = `${centerPos}%`; 
-                el.style.height = '6%'; 
-                el.style.left = '42%'; 
-                el.style.width = '16%';
-            } else if (secId === "Bottom") {
-                el.style.top = `calc(100% - ${centerPos}% - 6%)`; 
-                el.style.height = '6%'; 
-                el.style.left = '42%'; 
-                el.style.width = '16%';
-            } else if (secId === "Left") {
-                el.style.left = `${centerPos}%`; 
-                el.style.width = '6%'; 
-                el.style.top = '42%'; 
-                el.style.height = '16%';
-            } else if (secId === "Right") {
-                el.style.left = `calc(100% - ${centerPos}% - 6%)`; 
-                el.style.width = '6%'; 
-                el.style.top = '42%'; 
-                el.style.height = '16%';
+            const el = document.createElement('div'); el.className = 'wall-block';
+            const rValue = POS_MAP[secId][row];
+            if (secId === "Top" || secId === "Bottom") {
+                el.style.top = `calc(${rValue}% - 3%)`; el.style.height = '6%'; el.style.left = '42%'; el.style.width = '16%';
+            } else {
+                el.style.left = `calc(${rValue}% - 3%)`; el.style.width = '6%'; el.style.top = '42%'; el.style.height = '16%';
             }
-            
             document.getElementById('overlays-layer').appendChild(el);
         }
 
