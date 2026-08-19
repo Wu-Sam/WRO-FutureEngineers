@@ -35,6 +35,91 @@
             border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); z-index: 1000;
         }
 
+        /* 右側呼叫側邊欄按鈕 */
+        .toggle-sidebar-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #2196F3, #0b7dda);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        .toggle-sidebar-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(33,150,243,0.3); }
+
+        /* 側邊欄設計 */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: -420px; /* 預設隱藏在畫面外 */
+            width: 380px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+            transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 1001;
+            padding: 25px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .sidebar.active { right: 0; }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .sidebar-header h2 { margin: 0; color: var(--primary-color); font-size: 20px; }
+
+        .close-btn {
+            background: transparent;
+            color: #999;
+            font-size: 28px;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .close-btn:hover { color: #333; }
+
+        /* 歷史紀錄卡片樣式 */
+        .history-item {
+            background: #fff;
+            border-left: 5px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .history-item.fail { border-left-color: #f44336; }
+        .history-item.success { border-left-color: #4CAF50; }
+
+        .history-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; color: var(--primary-color); }
+        .history-time { font-size: 12px; color: #888; margin-bottom: 8px; }
+        .history-content { background: #f9f9f9; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 13px; }
+        
+        .history-actions { display: flex; gap: 8px; }
+        .history-actions button {
+            padding: 5px 10px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold;
+        }
+        .btn-mark-success { background: #e8f5e9; color: #2e7d32; }
+        .btn-mark-success:hover { background: #c8e6c9; }
+        .btn-mark-fail { background: #ffebee; color: #c62828; }
+        .btn-mark-fail:hover { background: #ffcdd2; }
+
         /* 模式切換 */
         .tab-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
         .tab-btn { 
@@ -132,7 +217,7 @@
         .pillar-red { background: radial-gradient(circle at 30% 30%, #ff4b4b, #cc0000); }
         .pillar-green { background: radial-gradient(circle at 30% 30%, #32cd32, #008000); }
         
-        /* 停車場 (優化版) */
+        /* 停車場 */
         .parking-zone { 
             position: absolute; border: 3px dashed #F702F9; 
             background-color: rgba(247, 2, 249, 0.15); z-index: 5; 
@@ -148,7 +233,6 @@
             to { transform: translateY(2px); }
         }
 
-        /* 資格賽：起點格與車 */
         .start-zone-marker {
             position: absolute; transform: translate(-50%, -50%); z-index: 4;
             border: 2px dashed #999; background-color: rgba(255, 255, 255, 0.6);
@@ -180,6 +264,20 @@
 <body onload="init()">
 
     <div id="realtime-clock">讀取時間中...</div>
+
+    <!-- 右側開啟側邊欄按鈕 -->
+    <button class="toggle-sidebar-btn" onclick="toggleSidebar()">📜 開啟歷史紀錄</button>
+
+    <!-- 側邊欄 -->
+    <div class="sidebar" id="mySidebar">
+        <div class="sidebar-header">
+            <h2>抽籤與供貨歷史紀錄</h2>
+            <button class="close-btn" onclick="toggleSidebar()">&times;</button>
+        </div>
+        <div id="historyList">
+            <div style="text-align: center; color: #888; margin-top: 40px; font-size: 14px;">目前尚無抽籤紀錄，請點擊畫面上的按鈕開始抽籤！</div>
+        </div>
+    </div>
 
     <h1>WRO 2026 未來工程師 (官方抽籤系統)</h1>
 
@@ -235,6 +333,12 @@
 
         let currentMode = 'open'; 
 
+        // 側邊欄開關功能
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mySidebar');
+            sidebar.classList.toggle('active');
+        }
+
         function resetDraw() {
             document.getElementById('overlays-layer').innerHTML = ''; 
             document.getElementById('result-info').innerHTML = '<div style="text-align: center; color: #888; font-size: 18px; margin-top: 50px;">👆 請點擊上方綠色按鈕進行抽籤...</div>';
@@ -268,7 +372,6 @@
         };
 
         const CARD_LAYOUTS = {
-            // 雙柱區域卡牌 (編號 5 ~ 20)
             5: [["p1","Red","Inner"],["p3","Red","Outer"]], 6: [["p1","Green","Inner"],["p3","Red","Outer"]],
             7: [["p1","Red","Outer"],["p3","Red","Inner"]], 8: [["p1","Green","Outer"],["p3","Red","Inner"]],
             9: [["p1","Red","Inner"],["p3","Red","Inner"]], 10: [["p1","Green","Inner"],["p3","Red","Inner"]],
@@ -308,7 +411,6 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
-        // 修改停車場繪製 (決賽時，車子直接生在停車場內)
         function drawParking(secId, withCar = false) {
             const el = document.createElement('div');
             el.className = 'parking-zone'; 
@@ -356,11 +458,48 @@
             document.getElementById('overlays-layer').appendChild(el);
         }
 
+        // 新增：加入歷史紀錄的函式
+        function addHistoryRecord(title, summaryText) {
+            const historyList = document.getElementById('historyList');
+            
+            // 移除預設的提示文字
+            if (historyList.innerHTML.includes('目前尚無抽籤紀錄')) {
+                historyList.innerHTML = '';
+            }
+
+            const now = new Date();
+            const timeString = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'history-item';
+            itemDiv.innerHTML = `
+                <div class="history-title">${title}</div>
+                <div class="history-time">🕒 抽籤時間：${now.toLocaleDateString()} ${timeString}</div>
+                <div class="history-content">${summaryText}</div>
+                <div class="history-actions">
+                    <button class="btn-mark-success" onclick="markRecordStatus(this, 'success')">✅ 狀態正常</button>
+                    <button class="btn-mark-fail" onclick="markRecordStatus(this, 'fail')">❌ 供貨失敗/有問題</button>
+                </div>
+            `;
+
+            // 將最新紀錄插在最上方
+            historyList.prepend(itemDiv);
+        }
+
+        // 標記紀錄狀態的函式
+        function markRecordStatus(btnElement, status) {
+            const card = btnElement.closest('.history-item');
+            card.classList.remove('success', 'fail');
+            card.classList.add(status);
+        }
+
         function runDraw() {
             resetDraw();
             const info = document.getElementById('result-info');
             let html = `<h2 class="section-title">${currentMode === 'open' ? '🏁 資格賽 (Open) 抽籤結果' : '🚧 決賽 (Obstacle) 抽籤結果'}</h2>`;
             
+            let summaryText = '';
+
             if (currentMode === 'open') {
                 const isWide = tossCoin() === "Heads";
                 html += `<strong>1. 賽道牆體設置：</strong> <span style="color:#e91e63; font-weight:bold; font-size:18px;">${isWide ? "寬 (Wide)" : "窄 (Narrow)"}</span><br>`;
@@ -379,6 +518,10 @@
                 drawStartGrid(startSec.id, zoneId, isWide);
                 drawStartCar(startSec.id, zoneId);
 
+                // 產生給歷史紀錄看的精簡摘要
+                summaryText = `<strong>資格賽</strong><br>牆體: ${isWide ? "寬" : "窄"}<br>起點區: ${startSec.name}<br>起點格: 位置 ${zoneId}`;
+                addHistoryRecord('🏁 資格賽抽籤', summaryText);
+
             } else {
                 const s = getSectionInfo(); 
                 const p = getSectionInfo(); 
@@ -388,7 +531,6 @@
                 html += `<strong>2. 停車場與起點：</strong> <span style="color:#F702F9; font-weight:bold; font-size:18px; background: rgba(247, 2, 249, 0.1); padding:2px 6px; border-radius:4px;">${p.name}</span> <span style="font-size:14px; color:#555;">(🚗 位於此區)</span><br>`;
                 html += `<strong>3. 單一標誌區：</strong> <span style="color:#0066cc; font-weight:bold; font-size:18px;">${s.name}</span><br><br>`;
                 
-                // 動態抽取單一方塊 (支援 p1, p2, p3)
                 const singlePositions = ["p1", "p2", "p3"];
                 const sPos = singlePositions[Math.floor(Math.random() * 3)];
                 const sColor = Math.random() < 0.5 ? "Green" : "Red";
@@ -408,6 +550,7 @@
                 let doubleDeck = Array.from({length: 16}, (_, i) => i + 5); 
                 doubleDeck.sort(() => Math.random() - 0.5);
 
+                let doubleSummary = '';
                 const sections = ["Top", "Right", "Bottom", "Left"];
                 sections.forEach(secId => {
                     const hasParking = (secId === config.parking_section);
@@ -416,18 +559,22 @@
                     } else {
                         const cardNum = doubleDeck.pop();
                         const data = CARD_LAYOUTS[cardNum];
-                        const c1Name = data[0][1] === "Green" ? "綠" : "紅"; const c1C = data[0][1] === "Green" ? "#008000" : "#cc0000";
-                        const c2Name = data[1][1] === "Green" ? "綠" : "紅"; const c2C = data[1][1] === "Green" ? "#008000" : "#cc0000";
-                        const forceH = (hasParking && (data[0][2]==="Outer"||data[1][2]==="Outer")) ? "<span style='color:#ff0000; font-size:12px;'> (退至內側)</span>" : "";
-                        html += `&nbsp;&nbsp;[${secId}] 卡牌 ${cardNum} ➔ <span style='color:${c1C}'>${c1Name} (${data[0][2]})</span>, <span style='color:${c2C}'>${c2Name} (${data[1][2]})</span>${forceH}<br>`;
+                        const c1Name = data[0][1] === "Green" ? "綠" : "紅";
+                        const c2Name = data[1][1] === "Green" ? "綠" : "紅";
+                        html += `&nbsp;&nbsp;[${secId}] 卡牌 ${cardNum} ➔ ${c1Name}(${data[0][2]}), ${c2Name}(${data[1][2]})<br>`;
                         
+                        doubleSummary += `[${secId}]卡${cardNum} `;
+
                         addPillar(secId, data[0][0], data[0][1], data[0][2], hasParking);
                         addPillar(secId, data[1][0], data[1][1], data[1][2], hasParking);
                     }
                 });
                 
-                // 決賽車子固定在停車場內
                 drawParking(config.parking_section, true);
+
+                // 產生給歷史紀錄看的精簡摘要
+                summaryText = `<strong>決賽</strong><br>停車場: ${p.name}<br>單一標誌區: ${s.name} (${sColorName} ${sPos})<br>雙標誌區: ${doubleSummary}`;
+                addHistoryRecord('🚧 決賽抽籤', summaryText);
             }
             
             info.innerHTML = html;
