@@ -427,13 +427,24 @@
         }
 
         function drawWallBlock(secId, row) {
-            const el = document.createElement('div'); el.className = 'wall-block';
-            const rValue = POS_MAP[secId][row];
-            if (secId === "Top" || secId === "Bottom") {
-                el.style.top = `calc(${rValue}% - 3%)`; el.style.height = '6%'; el.style.left = '42%'; el.style.width = '16%';
-            } else {
-                el.style.left = `calc(${rValue}% - 3%)`; el.style.width = '6%'; el.style.top = '42%'; el.style.height = '16%';
+            const el = document.createElement('div');
+            el.className = 'wall-block';
+
+            // 將牆塊強制固定在 26% (Inner) 的位置，確保其與 inner-wall 對齊
+            // 使用固定的 top/left 來對應賽道邊框
+            if(secId === "Top") { 
+                el.style.left='26%'; el.style.top='26%'; el.style.width='48%'; el.style.height='6%'; 
             }
+            else if(secId === "Right") { 
+                el.style.left='68%'; el.style.top='26%'; el.style.width='6%'; el.style.height='48%'; 
+            }
+            else if(secId === "Bottom") { 
+                el.style.left='26%'; el.style.top='68%'; el.style.width='48%'; el.style.height='6%'; 
+            }
+            else if(secId === "Left") { 
+                el.style.left='26%'; el.style.top='26%'; el.style.width='6%'; el.style.height='48%'; 
+            }
+            
             document.getElementById('overlays-layer').appendChild(el);
         }
 
