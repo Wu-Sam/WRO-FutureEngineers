@@ -472,18 +472,29 @@
         }
 
         function drawWallBlock(secId, row) {
-            const el = document.createElement('div'); el.className = 'wall-block';
-            const rValue = POS_MAP[secId][row];
-            let coords = {left: 50, top: 50};
-            if (secId === "Top" || secId === "Bottom") {
-                el.style.top = `calc(${rValue}% - 3%)`; el.style.height = '6%'; el.style.left = '42%'; el.style.width = '16%';
-                coords = {left: 50, top: rValue};
-            } else {
-                el.style.left = `calc(${rValue}% - 3%)`; el.style.width = '6%'; el.style.top = '42%'; el.style.height = '16%';
-                coords = {left: rValue, top: 50};
+            const el = document.createElement('div');
+            el.className = 'wall-block';
+
+            // 調整牆壁位置至「內側車道」的邊緣 (約在 34% 或 60% 處)
+            // 這樣會剛好遮住內側的行駛軌道，而不是完全遮住中間
+            if(secId === "Top") { 
+                // 上側：放置在內側邊緣
+                el.style.left='34%'; el.style.top='34%'; el.style.width='32%'; el.style.height='6%'; 
             }
+            else if(secId === "Right") { 
+                // 右側：放置在內側邊緣
+                el.style.left='60%'; el.style.top='34%'; el.style.width='6%'; el.style.height='32%'; 
+            }
+            else if(secId === "Bottom") { 
+                // 下側：放置在內側邊緣
+                el.style.left='34%'; el.style.top='60%'; el.style.width='32%'; el.style.height='6%'; 
+            }
+            else if(secId === "Left") { 
+                // 左側：放置在內側邊緣
+                el.style.left='34%'; el.style.top='34%'; el.style.width='6%'; el.style.height='32%'; 
+            }
+            
             document.getElementById('overlays-layer').appendChild(el);
-            return coords;
         }
 
         function drawStartGrid(secId, activeZone, isWide) {
